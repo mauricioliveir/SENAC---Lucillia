@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (response.ok) {
                     alert(result.message);
-                    window.location.href = '/login.html';
+                    window.location.href = '/index.html';
                 } else {
                     errorMessage.textContent = result.message;
                 }
@@ -83,7 +83,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (response.ok) {
                     alert(result.message);
-                    window.location.href = '/login.html';
+                    window.location.href = '/index.html';
                 } else {
                     errorMessage.textContent = result.message;
                 }

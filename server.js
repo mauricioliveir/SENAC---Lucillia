@@ -720,8 +720,10 @@ app.use('*', (req, res) => {
     });
 });
 
+// Iniciar o servidor
 
-module.exports = app;
+
+
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
@@ -729,3 +731,5 @@ process.on('SIGINT', async () => {
     await database.disconnect();
     process.exit(0);
 });
+
+module.exports = app;
