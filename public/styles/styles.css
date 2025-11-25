@@ -1,0 +1,172 @@
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
+
+/* Estilos gerais */
+body {
+    font-family: 'Roboto', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+}
+
+/* Estilos para o overlay (tela de login) */
+#overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Fundo escuro */
+    -webkit-backdrop-filter: blur(5px); /* Efeito de desfoque para Safari */
+    backdrop-filter: blur(5px); /* Efeito de desfoque */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Garante que o overlay fique acima de tudo */
+}
+
+/* Estilos para o conteúdo da página (inicialmente escondido) */
+#content.hidden {
+    display: none; /* Oculta o conteúdo inicialmente */
+}
+
+/* Estilos para o container de login */
+.login-container {
+    background-color: #fff;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+/* Estilos para a imagem do logo */
+.login-logo {
+    width: 150px; /* Ajuste o tamanho da imagem conforme necessário */
+    margin-bottom: 20px; /* Espaçamento entre a imagem e o título */
+}
+
+
+input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+input::placeholder {
+    color: #999; /* Cinza claro */
+    opacity: 1; /* Garante que a cor seja aplicada corretamente */
+}
+/* Estilos para o título "Login" */
+.login-box h1 {
+    margin-bottom: 20px;
+    font-size: 24px;
+    color: #033b77;
+    font-weight: 700;
+    font-family: 'Montserrat', sans-serif; /* Aplicando Montserrat */
+}
+
+/* Estilos para os labels (Usuário e Senha) */
+.login-box label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: #033b77;
+    text-align: left;
+    font-family: 'Montserrat', sans-serif; /* Aplicando Montserrat */
+}
+
+/* Estilos para os inputs */
+.login-box input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Estilos para o botão "Entrar" */
+.login-box button {
+    width: 100%;
+    padding: 12px;
+    background-color: #033b77;
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    font-family: 'Montserrat', sans-serif; /* Aplicando Montserrat */
+}
+
+.login-box button:hover {
+    background-color: #0056b3;
+}
+
+/* Estilos para o header */
+header {
+    display: flex;
+    align-items: center;
+    background-color: #f8f9fa;
+    padding: 0px 20px;
+    border-bottom: 1px solid #ddd;
+    font-family: 'Roboto', sans-serif;
+}
+
+/* Estilos para a imagem no header */
+header img {
+    height: 100px;
+    margin-right: 20px;
+}
+.password__reset{
+    text-decoration: none;
+    color: #033b77;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+}
+.not__account{
+    text-decoration: none;
+    color: #033b77;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.user__login{
+    text-decoration: none;
+    color: #033b77;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 500;
+    font-size: 1rem;
+}
+
+.password__reset:hover{
+    color: #007bff;
+}
+.not__account:hover{
+    color: #007bff;
+}
+
+.user__login:hover{
+    color: #007bff;
+}
+
+
+/* Estilos para o footer */
+.footer {
+    color: var(--cor-primaria);
+    background-color: #f8f9fa;
+    padding: 24px;
+    text-align: center;
+    font-family: "Roboto", sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+}

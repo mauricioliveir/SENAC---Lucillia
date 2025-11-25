@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    <title>Login</title>
+    <link rel="stylesheet" href="./styles/styles.css">
+</head>
+<body>
+    <div id="overlay">
+        <div class="login-container">
+            <div class="login-box">
+                <img src="./assets/senac-logo-0.png" alt="Logo SENAC" class="login-logo">
+                <h1>Login</h1>
+                <form id="login-form">
+                    <label for="email">E-mail:</label>
+                    <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        placeholder="seu_email@aqui.com"
+                        onfocus="this.placeholder=''"
+                        onblur="this.placeholder='seu_email@aqui.com'"
+                        required
+                    >
+
+                    <label for="password">Senha:</label>
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        placeholder="********"
+                        onfocus="this.placeholder=''"
+                        onblur="this.placeholder='********'"
+                        required
+                    >
+
+                    <button type="submit">Entrar</button>
+                </form>
+                <p>
+                    <a class="password__reset" href="./reset-password.html">Esqueceu a senha?</a>
+                </p>
+                <p>
+                    Não tem uma conta? <a class="not__account" href="./register.html">Registre-se</a>
+                </p>
+                <p id="error-message" class="error"></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="./auth.js"></script>
+</body>
+</html>

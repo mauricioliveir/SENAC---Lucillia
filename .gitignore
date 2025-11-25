@@ -1,0 +1,25 @@
+# Dependências do Node.js
+node_modules/
+
+# Arquivos de ambiente
+.env
+.env.local
+.env.development
+.env.production
+
+# Logs e arquivos temporários
+*.log
+*.tmp
+*.temp
+
+# Configurações do editor/IDE
+.vscode/
+.idea/
+
+# Arquivos do sistema operacional
+.DS_Store
+Thumbs.db
+
+# Arquivos gerados pelo Vercel
+.vercel/
+.vercel

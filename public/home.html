@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" type="image/png" href="./assets/favicon.png">
+    <title>SENAC - Programa de Simulação</title>
+    <link rel="stylesheet" href="./styles/styles-index.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="sidebar-page">
+    <!-- Header -->
+    <header>
+        <div class="header-left">
+            <img src="./assets/senac-logo-0.png" alt="Logo SENAC">
+            <div class="header-title">
+                <h1 class="titulo__pagina">Sistema de Simulação de Rotinas Administrativas</h1>
+                <p class="subtitle">Plataforma integrada de gestão empresarial</p>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="user-info">
+                <i class="fas fa-user-circle user-icon"></i>
+                <span id="user-name">Usuário</span>
+            </div>
+            <button id="logout-button" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+                Sair
+            </button>
+        </div>
+    </header>
+    
+    <!-- Navigation -->
+    <nav>
+        <ul>
+            <li>
+                <a href="#home" class="nav-link active">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+            </li>
+            <li>
+                <a href="#dep-pessoal" class="nav-link">
+                    <i class="fas fa-users"></i>
+                    <span>Departamento Pessoal</span>
+                </a>
+            </li>
+            <li>
+                <a href="#financeiro" class="nav-link">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Financeiro</span>
+                </a>
+            </li>
+            <li>
+                <a href="#vendas" class="nav-link">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>Vendas</span>
+                </a>
+            </li>
+            <li>
+                <a href="#estoque" class="nav-link">
+                    <i class="fas fa-warehouse"></i>
+                    <span>Estoque</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <!-- Seção Home -->
+        <section id="home" class="active">
+            <div class="welcome-section">
+                <div class="welcome-card">
+                    <h1>Bem-vindo ao Sistema de Gestão</h1>
+                    <p class="welcome-text">Uma plataforma completa para simulação de rotinas administrativas empresariais</p>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fas fa-users stat-icon"></i>
+                            <div class="stat-info">
+                                <h3>Funcionários</h3>
+                                <span class="stat-number" id="total-funcionarios">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-money-bill-wave stat-icon"></i>
+                            <div class="stat-info">
+                                <h3>Saldo Atual</h3>
+                                <span class="stat-number" id="saldo-atual">R$ 0,00</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-shopping-cart stat-icon"></i>
+                            <div class="stat-info">
+                                <h3>Vendas Hoje</h3>
+                                <span class="stat-number" id="vendas-hoje">0</span>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fas fa-boxes stat-icon"></i>
+                            <div class="stat-info">
+                                <h3>Itens em Estoque</h3>
+                                <span class="stat-number" id="itens-estoque">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Departamento Pessoal -->
+        <section id="dep-pessoal">
+            <div class="section-header">
+                <h1><i class="fas fa-users"></i> Departamento Pessoal</h1>
+                <p>Cadastro completo de colaboradores com dados pessoais e informações do cargo</p>
+            </div>
+            
+            <div class="content-card">
+                <form id="cadastro-funcionario-form" class="modern-form">
+                    <h2 class="form-title">
+                        <i class="fas fa-user-plus"></i>
+                        Cadastro de Funcionário
+                    </h2>
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nome">
+                                <i class="fas fa-id-card"></i>
+                                Nome Completo:
+                            </label>
+                            <input type="text" id="nome" required placeholder="Digite o nome completo">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cpf">
+                                <i class="fas fa-fingerprint"></i>
+                                CPF:
+                            </label>
+                            <input type="text" id="cpf" required placeholder="000.000.000-00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="rg">
+                                <i class="fas fa-address-card"></i>
+                                RG:
+                            </label>
+                            <input type="text" id="rg" required placeholder="Digite o RG">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="filiacao">
+                                <i class="fas fa-female"></i>
+                                Nome da Mãe:
+                            </label>
+                            <input type="text" id="filiacao" placeholder="Digite o nome da mãe">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cep">
+                                <i class="fas fa-map-marker-alt"></i>
+                                CEP:
+                            </label>
+                            <input type="text" id="cep" required placeholder="00000-000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="logradouro">
+                                <i class="fas fa-road"></i>
+                                Logradouro:
+                            </label>
+                            <input type="text" id="logradouro" required placeholder="Rua, Avenida, etc.">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="numero">
+                                <i class="fas fa-hashtag"></i>
+                                Número:
+                            </label>
+                            <input type="text" id="numero" required placeholder="Número">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="bairro">
+                                <i class="fas fa-map"></i>
+                                Bairro:
+                            </label>
+                            <input type="text" id="bairro" required placeholder="Bairro">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cidade">
+                                <i class="fas fa-city"></i>
+                                Cidade:
+                            </label>
+                            <input type="text" id="cidade" required placeholder="Cidade">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="estado">
+                                <i class="fas fa-flag"></i>
+                                Estado:
+                            </label>
+                            <input type="text" id="estado" required placeholder="UF">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="telefone">
+                                <i class="fas fa-phone"></i>
+                                Telefone:
+                            </label>
+                            <input type="text" id="telefone" placeholder="(00) 00000-0000">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="email">
+                                <i class="fas fa-envelope"></i>
+                                E-mail:
+                            </label>
+                            <input type="email" id="email" required placeholder="email@exemplo.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="cargo_admitido">
+                                <i class="fas fa-briefcase"></i>
+                                Cargo Admitido:
+                            </label>
+                            <input type="text" id="cargo_admitido" required placeholder="Cargo do funcionário">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="salario">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Salário:
+                            </label>
+                            <input type="number" step="0.01" id="salario" required placeholder="0,00">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="data_admissao">
+                                <i class="fas fa-calendar-alt"></i>
+                                Data de Admissão:
+                            </label>
+                            <input type="date" id="data_admissao" required>
+                        </div>
+                    </div>
+                    
+                    <button id="submit-btn" class="btn btn-primary btn-large" type="submit" disabled>
+                        <i class="fas fa-save"></i>
+                        Cadastrar Funcionário
+                    </button>
+                    <p id="error-message" class="error-message"></p>
+                </form>
+            </div>
+        </section>
+
+        <!-- Seção Financeiro -->
+        <section id="financeiro">
+            <div class="section-header">
+                <h1><i class="fas fa-chart-line"></i> Financeiro</h1>
+                <p>Gestão completa de tesouraria, fluxo de caixa e contas a pagar/receber</p>
+            </div>
+
+            <div class="finance-grid">
+                <!-- Tesouraria -->
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-cash-register"></i>
+                        Tesouraria
+                    </h2>
+                    <form id="tesouraria-form" class="compact-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="tipo">Tipo:</label>
+                                <select id="tipo" required>
+                                    <option value="entrada">Entrada</option>
+                                    <option value="saida">Saída</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="valor">Valor (R$):</label>
+                                <input type="number" id="valor" step="0.01" required placeholder="0,00">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="descricao">Descrição:</label>
+                            <input type="text" id="descricao" required placeholder="Descrição do lançamento">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Lançar
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Fluxo de Caixa -->
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Fluxo de Caixa
+                    </h2>
+                    <div class="fluxo-caixa">
+                        <div class="fluxo-item">
+                            <span class="fluxo-label">Entradas:</span>
+                            <span class="fluxo-value positive">R$ <span id="entradas">0,00</span></span>
+                        </div>
+                        <div class="fluxo-item">
+                            <span class="fluxo-label">Saídas:</span>
+                            <span class="fluxo-value negative">R$ <span id="saidas">0,00</span></span>
+                        </div>
+                        <div class="fluxo-item total">
+                            <span class="fluxo-label">Saldo Final:</span>
+                            <span class="fluxo-value" id="saldo-final">R$ 0,00</span>
+                        </div>
+                    </div>
+                    <button id="gerar-relatorio-financeiro" class="btn btn-secondary">
+                        <i class="fas fa-file-pdf"></i>
+                        Gerar Relatório (PDF)
+                    </button>
+                </div>
+
+                <!-- Contas a Pagar -->
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-money-bill-wave"></i>
+                        Contas a Pagar
+                    </h2>
+                    <form id="form-conta-pagar" class="compact-form">
+                        <div class="form-group">
+                            <label for="descricao-pagar">Descrição:</label>
+                            <input type="text" id="descricao-pagar" required placeholder="Descrição da conta">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="valor-pagar">Valor (R$):</label>
+                                <input type="number" id="valor-pagar" required placeholder="0,00">
+                            </div>
+                            <div class="form-group">
+                                <label for="vencimento-pagar">Vencimento:</label>
+                                <input type="date" id="vencimento-pagar" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Cadastrar
+                        </button>
+                    </form>
+                    <div class="contas-list">
+                        <h3>Contas Cadastradas</h3>
+                        <ul id="lista-contas-pagar"></ul>
+                    </div>
+                </div>
+
+                <!-- Contas a Receber -->
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-hand-holding-usd"></i>
+                        Contas a Receber
+                    </h2>
+                    <form id="form-conta-receber" class="compact-form">
+                        <div class="form-group">
+                            <label for="descricao-receber">Descrição:</label>
+                            <input type="text" id="descricao-receber" required placeholder="Descrição da conta">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="valor-receber">Valor (R$):</label>
+                                <input type="number" id="valor-receber" required placeholder="0,00">
+                            </div>
+                            <div class="form-group">
+                                <label for="vencimento-receber">Vencimento:</label>
+                                <input type="date" id="vencimento-receber" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Cadastrar
+                        </button>
+                    </form>
+                    <div class="contas-list">
+                        <h3>Contas Cadastradas</h3>
+                        <ul id="lista-contas-receber"></ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Vendas -->
+        <section id="vendas">
+            <div class="section-header">
+                <h1><i class="fas fa-shopping-cart"></i> Vendas</h1>
+                <p>Registro de vendas e simulação de emissão de nota fiscal fictícia</p>
+            </div>
+
+            <div class="content-grid">
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-cash-register"></i>
+                        Nova Venda
+                    </h2>
+                    <form id="cadastro-venda-form" class="modern-form">
+                        <div class="form-group">
+                            <label for="cliente-venda">Cliente:</label>
+                            <input type="text" id="cliente-venda" required placeholder="Nome do cliente">
+                        </div>
+                        <div class="form-group">
+                            <label for="produto-venda">Produto:</label>
+                            <input type="text" id="produto-venda" required placeholder="Produto vendido">
+                        </div>
+                        <div class="form-group">
+                            <label for="valor-venda">Valor (R$):</label>
+                            <input type="number" id="valor-venda" step="0.01" required placeholder="0,00">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-check"></i>
+                            Registrar Venda
+                        </button>
+                    </form>
+                </div>
+
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-file-invoice"></i>
+                        Nota Fiscal
+                    </h2>
+                    <div id="nota-fiscal" class="nota-fiscal">
+                        <p class="placeholder">As notas fiscais aparecerão aqui após o registro das vendas.</p>
+                    </div>
+                    <button id="gerar-relatorio-vendas" class="btn btn-secondary">
+                        <i class="fas fa-file-pdf"></i>
+                        Gerar Relatório (PDF)
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Estoque -->
+        <section id="estoque">
+            <div class="section-header">
+                <h1><i class="fas fa-warehouse"></i> Estoque</h1>
+                <p>Lançamentos de entrada de produtos no estoque via NF fictícia</p>
+            </div>
+
+            <div class="content-grid">
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-box-open"></i>
+                        Entrada no Estoque
+                    </h2>
+                    <form id="cadastro-entrada-estoque-form" class="modern-form">
+                        <div class="form-group">
+                            <label for="produto-estoque">Produto:</label>
+                            <input type="text" id="produto-estoque" required placeholder="Nome do produto">
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="quantidade-estoque">Quantidade:</label>
+                                <input type="number" id="quantidade-estoque" required placeholder="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="valor-unitario-estoque">Valor Unitário (R$):</label>
+                                <input type="number" id="valor-unitario-estoque" step="0.01" required placeholder="0,00">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="nota-fiscal-estoque">Número da Nota Fiscal:</label>
+                            <input type="text" id="nota-fiscal-estoque" required placeholder="Número da NF">
+                        </div>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                            Cadastrar Entrada
+                        </button>
+                    </form>
+                </div>
+
+                <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-list"></i>
+                        Entradas de Estoque
+                    </h2>
+                    <div class="estoque-list">
+                        <ul id="lista-entradas-estoque"></ul>
+                    </div>
+                    <button id="gerar-relatorio-estoque" class="btn btn-secondary">
+                        <i class="fas fa-file-pdf"></i>
+                        Gerar Relatório (PDF)
+                    </button>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Scripts -->
+    <script src="./scripts/script.js"></script>
+    <script src="./auth.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+</body>
+</html>
