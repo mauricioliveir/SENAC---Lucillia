@@ -2,7 +2,7 @@ const { MongoClient } = require('mongodb');
 
 class MongoDB {
     constructor() {
-        this.uri = "mongodb+srv://db_user_senac:30081409@cluster0.npzuxq6.mongodb.net/senac_sistema?retryWrites=true&w=majority";
+        this.uri = process.env.MONGODB_URI;
         this.client = new MongoClient(this.uri);
         this.db = null;
     }
