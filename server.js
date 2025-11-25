@@ -721,11 +721,13 @@ app.use('*', (req, res) => {
 });
 
 // Iniciar o servidor
-app.listen(port, () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${port}`);
-    console.log(`📊 MongoDB Atlas: Conectado ao cluster0.npzuxq6.mongodb.net`);
-    console.log(`🛠️  Ambiente: ${process.env.NODE_ENV || 'development'}`);
-});
+//app.listen(port, () => {
+    //console.log(`🚀 Servidor rodando em http://localhost:${port}`);
+    //console.log(`📊 MongoDB Atlas: Conectado ao cluster0.npzuxq6.mongodb.net`);
+    //console.log(`🛠️  Ambiente: ${process.env.NODE_ENV || 'development'}`);
+//});
+
+module.exports = app;
 
 // Graceful shutdown
 process.on('SIGINT', async () => {
