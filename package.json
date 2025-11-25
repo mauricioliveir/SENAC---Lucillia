@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Sistema de simulação de rotinas administrativas",
   "engines": { 
-    "node": "18.x" },
+    "node": "24.x" },
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
