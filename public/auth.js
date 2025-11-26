@@ -1,3 +1,5 @@
+const API_BASE = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : 'https://senac-lucillia.vercel.app';
+
 document.addEventListener('DOMContentLoaded', function () {
     const registerForm = document.getElementById('register-form');
     const loginForm = document.getElementById('login-form');
