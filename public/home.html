@@ -286,132 +286,216 @@
             </div>
 
             <div class="finance-grid">
-                <!-- Tesouraria -->
-                <div class="content-card">
-                    <h2 class="card-title">
-                        <i class="fas fa-cash-register"></i>
-                        Tesouraria
-                    </h2>
-                    <form id="tesouraria-form" class="compact-form">
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="tipo">Tipo:</label>
-                                <select id="tipo" required>
-                                    <option value="entrada">Entrada</option>
-                                    <option value="saida">Saída</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label for="valor">Valor (R$):</label>
-                                <input type="number" id="valor" step="0.01" required placeholder="0,00">
+                <!-- Primeira Linha: Tesouraria e Fluxo de Caixa -->
+                <div class="finance-top-row">
+                    <!-- Tesouraria -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-cash-register"></i>
+                                Tesouraria
+                            </h2>
+                            <div class="card-badge">
+                                <i class="fas fa-exchange-alt"></i>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label for="descricao">Descrição:</label>
-                            <input type="text" id="descricao" required placeholder="Descrição do lançamento">
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Lançar
-                        </button>
-                    </form>
-                </div>
-
-                <!-- Fluxo de Caixa -->
-                <div class="content-card">
-                    <h2 class="card-title">
-                        <i class="fas fa-chart-bar"></i>
-                        Fluxo de Caixa
-                    </h2>
-                    <div class="fluxo-caixa">
-                        <div class="fluxo-item">
-                            <span class="fluxo-label">Entradas:</span>
-                            <span class="fluxo-value positive">R$ <span id="entradas">0,00</span></span>
-                        </div>
-                        <div class="fluxo-item">
-                            <span class="fluxo-label">Saídas:</span>
-                            <span class="fluxo-value negative">R$ <span id="saidas">0,00</span></span>
-                        </div>
-                        <div class="fluxo-item total">
-                            <span class="fluxo-label">Saldo Final:</span>
-                            <span class="fluxo-value" id="saldo-final">R$ 0,00</span>
-                        </div>
-                    </div>
-                    <button id="gerar-relatorio-financeiro" class="btn btn-secondary">
-                        <i class="fas fa-file-pdf"></i>
-                        Gerar Relatório (PDF)
-                    </button>
-                </div>
-
-                <!-- Contas a Pagar -->
-                <div class="content-card">
-                    <h2 class="card-title">
-                        <i class="fas fa-money-bill-wave"></i>
-                        Contas a Pagar
-                    </h2>
-                    <form id="form-conta-pagar" class="compact-form">
-                        <div class="form-group">
-                            <label for="descricao-pagar">Descrição:</label>
-                            <input type="text" id="descricao-pagar" required placeholder="Descrição da conta">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="valor-pagar">Valor (R$):</label>
-                                <input type="number" id="valor-pagar" required placeholder="0,00">
+                        <form id="tesouraria-form" class="compact-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="tipo">
+                                        <i class="fas fa-filter"></i>
+                                        Tipo:
+                                    </label>
+                                    <select id="tipo" required class="select-style">
+                                        <option value="entrada">Entrada</option>
+                                        <option value="saida">Saída</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="valor">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                        Valor (R$):
+                                    </label>
+                                    <input type="number" id="valor" step="0.01" required placeholder="0,00" class="money-input">
+                                </div>
                             </div>
                             <div class="form-group">
-                                <label for="vencimento-pagar">Vencimento:</label>
-                                <input type="date" id="vencimento-pagar" required>
+                                <label for="descricao">
+                                    <i class="fas fa-align-left"></i>
+                                    Descrição:
+                                </label>
+                                <input type="text" id="descricao" required placeholder="Descrição do lançamento">
                             </div>
-                        </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Cadastrar
-                        </button>
-                    </form>
-                    <div class="contas-list">
-                        <h3>Contas Cadastradas</h3>
-                        <ul id="lista-contas-pagar"></ul>
-                        <button id="gerar-relatorio-pagar" class="btn btn-secondary">
-                            <i class="fas fa-file-pdf"></i>
-                            Gerar Relatório (PDF)
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-plus-circle"></i>
+                                Lançar na Tesouraria
                             </button>
+                        </form>
+                    </div>
+
+                    <!-- Fluxo de Caixa -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Fluxo de Caixa
+                            </h2>
+                            <div class="card-badge">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                        </div>
+                        <div class="fluxo-caixa">
+                            <div class="fluxo-item">
+                                <div class="fluxo-icon positive">
+                                    <i class="fas fa-arrow-down"></i>
+                                </div>
+                                <div class="fluxo-info">
+                                    <span class="fluxo-label">Entradas</span>
+                                    <span class="fluxo-value positive">R$ <span id="entradas">0,00</span></span>
+                                </div>
+                            </div>
+                            <div class="fluxo-item">
+                                <div class="fluxo-icon negative">
+                                    <i class="fas fa-arrow-up"></i>
+                                </div>
+                                <div class="fluxo-info">
+                                    <span class="fluxo-label">Saídas</span>
+                                    <span class="fluxo-value negative">R$ <span id="saidas">0,00</span></span>
+                                </div>
+                            </div>
+                            <div class="fluxo-item total">
+                                <div class="fluxo-icon total">
+                                    <i class="fas fa-balance-scale"></i>
+                                </div>
+                                <div class="fluxo-info">
+                                    <span class="fluxo-label">Saldo Final</span>
+                                    <span class="fluxo-value total" id="saldo-final">R$ 0,00</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button id="gerar-relatorio-financeiro" class="btn btn-secondary btn-full">
+                            <i class="fas fa-file-pdf"></i>
+                            Gerar Relatório Completo (PDF)
+                        </button>
                     </div>
                 </div>
 
-                <!-- Contas a Receber -->
-                <div class="content-card">
-                    <h2 class="card-title">
-                        <i class="fas fa-hand-holding-usd"></i>
-                        Contas a Receber
-                    </h2>
-                    <form id="form-conta-receber" class="compact-form">
-                        <div class="form-group">
-                            <label for="descricao-receber">Descrição:</label>
-                            <input type="text" id="descricao-receber" required placeholder="Descrição da conta">
-                        </div>
-                        <div class="form-row">
-                            <div class="form-group">
-                                <label for="valor-receber">Valor (R$):</label>
-                                <input type="number" id="valor-receber" required placeholder="0,00">
-                            </div>
-                            <div class="form-group">
-                                <label for="vencimento-receber">Vencimento:</label>
-                                <input type="date" id="vencimento-receber" required>
+                <!-- Segunda Linha: Contas a Pagar e Contas a Receber -->
+                <div class="finance-bottom-row">
+                    <!-- Contas a Pagar -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-money-bill-wave"></i>
+                                Contas a Pagar
+                            </h2>
+                            <div class="card-badge pagar">
+                                <i class="fas fa-hand-holding-usd"></i>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-plus"></i>
-                            Cadastrar
-                        </button>
-                    </form>
-                    <div class="contas-list">
-                        <h3>Contas Cadastradas</h3>
-                        <ul id="lista-contas-receber"></ul>
-                        <button id="gerar-relatorio-receber" class="btn btn-secondary">
-                            <i class="fas fa-file-pdf"></i>
-                            Gerar Relatório (PDF)
-                        </button>
+                        <form id="form-conta-pagar" class="compact-form">
+                            <div class="form-group">
+                                <label for="descricao-pagar">
+                                    <i class="fas fa-tag"></i>
+                                    Descrição:
+                                </label>
+                                <input type="text" id="descricao-pagar" required placeholder="Descrição da conta">
+                            </div>
+                            <div class="form-row compact">
+                                <div class="form-group">
+                                    <label for="valor-pagar">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        Valor (R$):
+                                    </label>
+                                    <input type="number" id="valor-pagar" step="0.01" required placeholder="0,00" class="money-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="vencimento-pagar">
+                                        <i class="fas fa-calendar-day"></i>
+                                        Vencimento:
+                                    </label>
+                                    <input type="date" id="vencimento-pagar" required class="date-input">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-plus-circle"></i>
+                                Cadastrar Conta
+                            </button>
+                        </form>
+                        <div class="contas-section">
+                            <div class="contas-header">
+                                <h3>
+                                    <i class="fas fa-list"></i>
+                                    Contas Cadastradas
+                                </h3>
+                                <span class="contas-count" id="count-pagar">0</span>
+                            </div>
+                            <div class="contas-list">
+                                <ul id="lista-contas-pagar"></ul>
+                            </div>
+                            <button id="gerar-relatorio-pagar" class="btn btn-secondary btn-full">
+                                <i class="fas fa-file-pdf"></i>
+                                Relatório Contas a Pagar (PDF)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Contas a Receber -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <h2 class="card-title">
+                                <i class="fas fa-hand-holding-usd"></i>
+                                Contas a Receber
+                            </h2>
+                            <div class="card-badge receber">
+                                <i class="fas fa-money-check"></i>
+                            </div>
+                        </div>
+                        <form id="form-conta-receber" class="compact-form">
+                            <div class="form-group">
+                                <label for="descricao-receber">
+                                    <i class="fas fa-tag"></i>
+                                    Descrição:
+                                </label>
+                                <input type="text" id="descricao-receber" required placeholder="Descrição da conta">
+                            </div>
+                            <div class="form-row compact">
+                                <div class="form-group">
+                                    <label for="valor-receber">
+                                        <i class="fas fa-dollar-sign"></i>
+                                        Valor (R$):
+                                    </label>
+                                    <input type="number" id="valor-receber" step="0.01" required placeholder="0,00" class="money-input">
+                                </div>
+                                <div class="form-group">
+                                    <label for="vencimento-receber">
+                                        <i class="fas fa-calendar-day"></i>
+                                        Vencimento:
+                                    </label>
+                                    <input type="date" id="vencimento-receber" required class="date-input">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-plus-circle"></i>
+                                Cadastrar Conta
+                            </button>
+                        </form>
+                        <div class="contas-section">
+                            <div class="contas-header">
+                                <h3>
+                                    <i class="fas fa-list"></i>
+                                    Contas Cadastradas
+                                </h3>
+                                <span class="contas-count" id="count-receber">0</span>
+                            </div>
+                            <div class="contas-list">
+                                <ul id="lista-contas-receber"></ul>
+                            </div>
+                            <button id="gerar-relatorio-receber" class="btn btn-secondary btn-full">
+                                <i class="fas fa-file-pdf"></i>
+                                Relatório Contas a Receber (PDF)
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
