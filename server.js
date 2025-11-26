@@ -27,16 +27,49 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Conectar ao MongoDB quando o servidor iniciar
-let db;
-let dbConnectionAttempted = false;
+// === CONEXÃO COM MONGODB - VERSÃO CORRIGIDA ===
+let db = null;
+let isDbConnected = false;
 
-database.connect().then(database => {
-    db = database;
-    console.log('✅ Database conectada e pronta para uso');
-}).catch(err => {
-    console.error('❌ Erro ao conectar com database:', err);
+// Função para inicializar o database
+async function initializeDatabase() {
+    if (isDbConnected) return;
+    
+    console.log('🔄 Inicializando conexão com MongoDB...');
+    
+    try {
+        db = await database.connect();
+        isDbConnected = true;
+        console.log('✅ Database inicializada com sucesso!');
+        
+        // Verifica as collections disponíveis
+        const collections = await db.listCollections().toArray();
+        console.log('📂 Collections disponíveis:', collections.map(c => c.name));
+        
+    } catch (error) {
+        console.error('💥 FALHA CRÍTICA na inicialização do database:', error);
+        isDbConnected = false;
+        // Não throw aqui - deixe o servidor rodar mesmo sem DB
+    }
+}
+
+// Inicializa imediatamente
+initializeDatabase();
+
+// Middleware para verificar database
+app.use('/api/*', async (req, res, next) => {
+    if (!isDbConnected && !req.path.includes('/health') && !req.path.includes('/debug')) {
+        console.log('⚠️  Tentando reconectar database para requisição:', req.path);
+        try {
+            await initializeDatabase();
+        } catch (error) {
+            // Continua mesmo com erro
+        }
+    }
+    next();
 });
+
+// ==================== ROTAS DE DEBUG ====================
 
 // Rota para debug das variáveis de ambiente
 app.get('/api/debug-env', (req, res) => {
@@ -48,9 +81,111 @@ app.get('/api/debug-env', (req, res) => {
     });
 });
 
+// Rota de debug da conexão MongoDB
+app.get('/api/debug-db', async (req, res) => {
+    try {
+        const dbStatus = await database.getStatus();
+        
+        const debugInfo = {
+            timestamp: new Date().toISOString(),
+            database: {
+                ...dbStatus,
+                isDbConnected,
+                hasDb: !!db
+            },
+            environment: {
+                MONGODB_URI: process.env.MONGODB_URI ? "✅ DEFINIDA" : "❌ NÃO DEFINIDA",
+                NODE_ENV: process.env.NODE_ENV,
+                VERCEL: process.env.VERCEL ? "✅ SIM" : "❌ NÃO"
+            },
+            system: {
+                node: process.version,
+                platform: process.platform
+            }
+        };
+
+        // Tenta uma operação real no MongoDB se conectado
+        if (dbStatus.connected && db) {
+            try {
+                const collections = await db.listCollections().toArray();
+                debugInfo.database.collections = collections.map(c => c.name);
+                debugInfo.database.ping = '✅ OK';
+            } catch (opError) {
+                debugInfo.database.operation_error = opError.message;
+            }
+        }
+
+        res.json(debugInfo);
+    } catch (error) {
+        res.status(500).json({
+            error: error.message,
+            timestamp: new Date().toISOString()
+        });
+    }
+});
+
+// Rota para health check detalhado
+app.get('/api/health', async (req, res) => {
+    try {
+        const healthStatus = {
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            server: {
+                environment: process.env.NODE_ENV || 'development',
+                node_version: process.version,
+                uptime: process.uptime()
+            },
+            database: {
+                connected: isDbConnected,
+                database_name: db ? 'senac_sistema' : 'disconnected'
+            },
+            environment: {
+                mongodb_uri: process.env.MONGODB_URI ? 'DEFINIDA' : 'NÃO DEFINIDA',
+                email_host: process.env.EMAIL_HOST ? 'DEFINIDO' : 'NÃO DEFINIDO'
+            }
+        };
+
+        // Testa a conexão com o MongoDB se estiver conectado
+        if (db && isDbConnected) {
+            try {
+                await db.command({ ping: 1 });
+                healthStatus.database.ping = 'OK';
+            } catch (pingError) {
+                healthStatus.database.ping = 'ERROR';
+                healthStatus.database.ping_error = pingError.message;
+                healthStatus.status = 'DEGRADED';
+            }
+        } else {
+            healthStatus.status = 'ERROR';
+            healthStatus.database.connection_error = 'Database não inicializada';
+        }
+
+        res.json(healthStatus);
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
+});
+
+// ==================== ROTAS DE AUTENTICAÇÃO ====================
+
 // Rota para registro de usuário
 app.post('/api/register', async (req, res) => {
     const { nome, email, password } = req.body;
+    
+    console.log('📝 Tentativa de registro para:', email);
+    
+    if (!isDbConnected || !db) {
+        console.error('💥 Database não disponível para registro');
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível. Tente novamente em alguns segundos.' 
+        });
+    }
+
     try {
         const userExists = await db.collection('users').findOne({ email });
         if (userExists) {
@@ -64,33 +199,44 @@ app.post('/api/register', async (req, res) => {
             createdAt: new Date()
         });
         
+        console.log('✅ Usuário registrado com sucesso:', email);
         res.json({ 
             success: true, 
             message: 'Usuário registrado com sucesso!', 
             user: { _id: result.insertedId, nome, email } 
         });
     } catch (err) {
-        console.error('Erro ao registrar usuário:', err);
+        console.error('💥 Erro ao registrar usuário:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor.' });
     }
 });
 
-// Rota para login
+// Rota para login - VERSÃO CORRIGIDA
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     
-    console.log('🔐 Tentativa de login:', { email });
+    console.log('🔐 Tentativa de login para:', email);
     
-    try {
-        // Verifica se o database está conectado
-        if (!db) {
-            console.error('❌ Database não conectada');
-            return res.status(500).json({ 
-                success: false, 
-                message: 'Servidor não conectado ao banco de dados' 
-            });
+    // Tenta reconectar se necessário
+    if (!isDbConnected) {
+        console.log('🔄 Tentando reconectar database...');
+        try {
+            await initializeDatabase();
+        } catch (error) {
+            console.error('❌ Falha ao reconectar:', error.message);
         }
+    }
 
+    if (!isDbConnected || !db) {
+        console.error('💥 Database não disponível para login');
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível. Tente novamente em alguns segundos.' 
+        });
+    }
+
+    try {
+        console.log('🔍 Buscando usuário no MongoDB...');
         const user = await db.collection('users').findOne({ email, password });
         
         if (user) {
@@ -108,15 +254,14 @@ app.post('/api/login', async (req, res) => {
             console.log('❌ Credenciais inválidas para:', email);
             res.status(401).json({ 
                 success: false, 
-                message: 'Credenciais inválidas.' 
+                message: 'E-mail ou senha incorretos.' 
             });
         }
     } catch (err) {
-        console.error('💥 Erro ao fazer login:', err);
+        console.error('💥 Erro no processo de login:', err);
         res.status(500).json({ 
             success: false, 
-            message: 'Erro interno do servidor.',
-            error: process.env.NODE_ENV === 'development' ? err.message : 'Erro de conexão'
+            message: 'Erro interno do servidor.'
         });
     }
 });
@@ -124,6 +269,17 @@ app.post('/api/login', async (req, res) => {
 // Rota para solicitação de redefinição de senha
 app.post('/api/reset-password', async (req, res) => {
     const { email } = req.body;
+    
+    console.log('🔑 Solicitação de reset de senha para:', email);
+
+    if (!isDbConnected || !db) {
+        console.error('💥 Database não disponível para reset de senha');
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
+
     try {
         const user = await db.collection('users').findOne({ email });
 
@@ -140,17 +296,29 @@ app.post('/api/reset-password', async (req, res) => {
             text: `Sua senha cadastrada é: ${userPassword}. Recomendamos que altere sua senha assim que possível.`,
         });
 
+        console.log('✅ E-mail de recuperação enviado para:', email);
         res.json({ success: true, message: 'Senha enviada para seu e-mail!' });
 
     } catch (err) {
-        console.error('Erro ao solicitar redefinição de senha:', err);
+        console.error('💥 Erro ao solicitar redefinição de senha:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor.' });
     }
 });
 
+// ==================== ROTAS DE FUNCIONÁRIOS ====================
+
 // Rota para cadastro de funcionário
 app.post('/api/funcionarios', async (req, res) => {
     const { nome, cpf, rg, filiacao, cep, logradouro, numero, bairro, cidade, estado, telefone, email, cargo_admitido, salario, data_admissao } = req.body;
+
+    console.log('👤 Cadastrando funcionário:', nome);
+
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
 
     try {
         const funcionarioExiste = await db.collection('funcionarios').findOne({
@@ -180,13 +348,14 @@ app.post('/api/funcionarios', async (req, res) => {
             createdAt: new Date()
         });
 
+        console.log('✅ Funcionário cadastrado:', nome);
         res.json({ 
             success: true, 
             message: 'Funcionário cadastrado com sucesso!', 
             funcionario: { _id: result.insertedId, ...req.body } 
         });
     } catch (err) {
-        console.error('Erro ao cadastrar funcionário:', err);
+        console.error('💥 Erro ao cadastrar funcionário:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor.' });
     }
 });
@@ -194,6 +363,13 @@ app.post('/api/funcionarios', async (req, res) => {
 // Rota para buscar funcionário por ID
 app.get('/api/funcionarios/:id', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const funcionario = await db.collection('funcionarios').findOne({ 
             _id: new ObjectId(req.params.id) 
         });
@@ -204,7 +380,7 @@ app.get('/api/funcionarios/:id', async (req, res) => {
         
         res.json({ success: true, funcionario });
     } catch (err) {
-        console.error('Erro ao buscar funcionário:', err);
+        console.error('💥 Erro ao buscar funcionário:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor' });
     }
 });
@@ -212,6 +388,13 @@ app.get('/api/funcionarios/:id', async (req, res) => {
 // Rota para atualizar funcionário
 app.put('/api/funcionarios/:id', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const { nome, cpf, rg, filiacao, cep, logradouro, numero, bairro, cidade, estado, telefone, email, cargo_admitido, salario, data_admissao } = req.body;
 
         const result = await db.collection('funcionarios').updateOne(
@@ -242,9 +425,10 @@ app.put('/api/funcionarios/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Funcionário não encontrado' });
         }
 
+        console.log('✅ Funcionário atualizado:', nome);
         res.json({ success: true, message: 'Funcionário atualizado com sucesso!' });
     } catch (err) {
-        console.error('Erro ao atualizar funcionário:', err);
+        console.error('💥 Erro ao atualizar funcionário:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor' });
     }
 });
@@ -252,6 +436,13 @@ app.put('/api/funcionarios/:id', async (req, res) => {
 // Rota para deletar funcionário
 app.delete('/api/funcionarios/:id', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const result = await db.collection('funcionarios').deleteOne({ 
             _id: new ObjectId(req.params.id) 
         });
@@ -260,9 +451,10 @@ app.delete('/api/funcionarios/:id', async (req, res) => {
             return res.status(404).json({ success: false, message: 'Funcionário não encontrado' });
         }
 
+        console.log('✅ Funcionário deletado ID:', req.params.id);
         res.json({ success: true, message: 'Funcionário deletado com sucesso!' });
     } catch (err) {
-        console.error('Erro ao deletar funcionário:', err);
+        console.error('💥 Erro ao deletar funcionário:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor' });
     }
 });
@@ -270,20 +462,36 @@ app.delete('/api/funcionarios/:id', async (req, res) => {
 // Rota para listar funcionários
 app.get('/api/funcionarios', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const funcionarios = await db.collection('funcionarios')
             .find()
             .sort({ nome: 1 })
             .toArray();
         res.json({ success: true, funcionarios });
     } catch (err) {
-        console.error('Erro ao buscar funcionários:', err);
+        console.error('💥 Erro ao buscar funcionários:', err);
         res.status(500).json({ success: false, message: 'Erro no servidor' });
     }
 });
 
+// ==================== ROTAS DO DASHBOARD ====================
+
 // Rota para estatísticas do dashboard
 app.get('/api/dashboard/stats', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const [
             totalFuncionarios,
             lancamentos,
@@ -322,14 +530,23 @@ app.get('/api/dashboard/stats', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Erro ao buscar estatísticas:', err);
+        console.error('💥 Erro ao buscar estatísticas:', err);
         res.status(500).json({ success: false, message: 'Erro ao buscar estatísticas' });
     }
 });
 
+// ==================== ROTAS FINANCEIRAS ====================
+
 // Rota para adicionar um lançamento financeiro
 app.post("/api/tesouraria", async (req, res) => {
     const { tipo, valor, descricao } = req.body;
+    
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
     
     if (!tipo || isNaN(valor) || valor <= 0 || !descricao) {
         return res.status(400).json({ success: false, message: "Dados inválidos" });
@@ -343,6 +560,7 @@ app.post("/api/tesouraria", async (req, res) => {
             data: new Date()
         });
         
+        console.log('💰 Lançamento financeiro registrado:', descricao);
         res.json({ 
             success: true, 
             data: { 
@@ -354,7 +572,7 @@ app.post("/api/tesouraria", async (req, res) => {
             } 
         });
     } catch (err) {
-        console.error("Erro ao inserir dados:", err);
+        console.error("💥 Erro ao inserir dados:", err);
         res.status(500).json({ success: false, message: "Erro interno do servidor" });
     }
 });
@@ -362,6 +580,13 @@ app.post("/api/tesouraria", async (req, res) => {
 // Rota para buscar todos os lançamentos e calcular fluxo de caixa
 app.get("/api/tesouraria", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const lancamentos = await db.collection('tesouraria')
             .find()
             .sort({ data: -1 })
@@ -369,7 +594,7 @@ app.get("/api/tesouraria", async (req, res) => {
             
         res.json({ success: true, lancamentos });
     } catch (err) {
-        console.error("Erro ao buscar dados:", err);
+        console.error("💥 Erro ao buscar dados:", err);
         res.status(500).json({ success: false, message: "Erro ao buscar dados" });
     }
 });
@@ -377,6 +602,13 @@ app.get("/api/tesouraria", async (req, res) => {
 // Rota para contas a pagar
 app.post("/api/contas-pagar", async (req, res) => {
     const { descricao, valor, vencimento } = req.body;
+    
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
     
     try {
         const result = await db.collection('contas_pagar').insertOne({
@@ -387,6 +619,7 @@ app.post("/api/contas-pagar", async (req, res) => {
             createdAt: new Date()
         });
         
+        console.log('📋 Conta a pagar cadastrada:', descricao);
         res.json({ 
             success: true, 
             conta: { 
@@ -398,7 +631,7 @@ app.post("/api/contas-pagar", async (req, res) => {
             } 
         });
     } catch (err) {
-        console.error("Erro ao cadastrar conta a pagar:", err);
+        console.error("💥 Erro ao cadastrar conta a pagar:", err);
         res.status(500).json({ success: false, message: "Erro interno do servidor" });
     }
 });
@@ -406,6 +639,13 @@ app.post("/api/contas-pagar", async (req, res) => {
 // Rota para listar contas a pagar
 app.get("/api/contas-pagar", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const contas = await db.collection('contas_pagar')
             .find()
             .sort({ vencimento: 1 })
@@ -413,7 +653,7 @@ app.get("/api/contas-pagar", async (req, res) => {
             
         res.json({ success: true, contas });
     } catch (err) {
-        console.error("Erro ao buscar contas a pagar:", err);
+        console.error("💥 Erro ao buscar contas a pagar:", err);
         res.status(500).json({ success: false, message: "Erro ao buscar dados" });
     }
 });
@@ -421,6 +661,13 @@ app.get("/api/contas-pagar", async (req, res) => {
 // Rota para contas a receber
 app.post("/api/contas-receber", async (req, res) => {
     const { descricao, valor, vencimento } = req.body;
+    
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
     
     try {
         const result = await db.collection('contas_receber').insertOne({
@@ -431,6 +678,7 @@ app.post("/api/contas-receber", async (req, res) => {
             createdAt: new Date()
         });
         
+        console.log('📋 Conta a receber cadastrada:', descricao);
         res.json({ 
             success: true, 
             conta: { 
@@ -442,7 +690,7 @@ app.post("/api/contas-receber", async (req, res) => {
             } 
         });
     } catch (err) {
-        console.error("Erro ao cadastrar conta a receber:", err);
+        console.error("💥 Erro ao cadastrar conta a receber:", err);
         res.status(500).json({ success: false, message: "Erro interno do servidor" });
     }
 });
@@ -450,6 +698,13 @@ app.post("/api/contas-receber", async (req, res) => {
 // Rota para listar contas a receber
 app.get("/api/contas-receber", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const contas = await db.collection('contas_receber')
             .find()
             .sort({ vencimento: 1 })
@@ -457,14 +712,23 @@ app.get("/api/contas-receber", async (req, res) => {
             
         res.json({ success: true, contas });
     } catch (err) {
-        console.error("Erro ao buscar contas a receber:", err);
+        console.error("💥 Erro ao buscar contas a receber:", err);
         res.status(500).json({ success: false, message: "Erro ao buscar dados" });
     }
 });
 
+// ==================== ROTAS DE VENDAS ====================
+
 // Rota para vendas
 app.post("/api/vendas", async (req, res) => {
     const { cliente, produto, valor } = req.body;
+    
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
     
     try {
         const result = await db.collection('vendas').insertOne({
@@ -476,6 +740,7 @@ app.post("/api/vendas", async (req, res) => {
             createdAt: new Date()
         });
         
+        console.log('🛒 Venda registrada:', produto);
         res.json({ 
             success: true, 
             venda: { 
@@ -488,7 +753,7 @@ app.post("/api/vendas", async (req, res) => {
             } 
         });
     } catch (err) {
-        console.error("Erro ao registrar venda:", err);
+        console.error("💥 Erro ao registrar venda:", err);
         res.status(500).json({ success: false, message: "Erro interno do servidor" });
     }
 });
@@ -496,6 +761,13 @@ app.post("/api/vendas", async (req, res) => {
 // Rota para listar vendas
 app.get("/api/vendas", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const vendas = await db.collection('vendas')
             .find()
             .sort({ data: -1 })
@@ -503,14 +775,23 @@ app.get("/api/vendas", async (req, res) => {
             
         res.json({ success: true, vendas });
     } catch (err) {
-        console.error("Erro ao buscar vendas:", err);
+        console.error("💥 Erro ao buscar vendas:", err);
         res.status(500).json({ success: false, message: "Erro ao buscar dados" });
     }
 });
 
+// ==================== ROTAS DE ESTOQUE ====================
+
 // Rota para estoque
 app.post("/api/estoque", async (req, res) => {
     const { produto, quantidade, valor_unitario, nota_fiscal } = req.body;
+    
+    if (!isDbConnected || !db) {
+        return res.status(503).json({ 
+            success: false, 
+            message: 'Serviço temporariamente indisponível.' 
+        });
+    }
     
     try {
         const result = await db.collection('estoque').insertOne({
@@ -523,6 +804,7 @@ app.post("/api/estoque", async (req, res) => {
             createdAt: new Date()
         });
         
+        console.log('📦 Entrada no estoque:', produto);
         res.json({ 
             success: true, 
             entrada: { 
@@ -536,7 +818,7 @@ app.post("/api/estoque", async (req, res) => {
             } 
         });
     } catch (err) {
-        console.error("Erro ao registrar entrada no estoque:", err);
+        console.error("💥 Erro ao registrar entrada no estoque:", err);
         res.status(500).json({ success: false, message: "Erro interno do servidor" });
     }
 });
@@ -544,6 +826,13 @@ app.post("/api/estoque", async (req, res) => {
 // Rota para listar estoque
 app.get("/api/estoque", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const estoque = await db.collection('estoque')
             .find()
             .sort({ data_entrada: -1 })
@@ -551,14 +840,23 @@ app.get("/api/estoque", async (req, res) => {
             
         res.json({ success: true, estoque });
     } catch (err) {
-        console.error("Erro ao buscar estoque:", err);
+        console.error("💥 Erro ao buscar estoque:", err);
         res.status(500).json({ success: false, message: "Erro ao buscar dados" });
     }
 });
 
+// ==================== ROTAS DE RELATÓRIOS ====================
+
 // Rota para gerar relatório financeiro em PDF
 app.get("/api/relatorio-financeiro", async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
         const lancamentos = await db.collection('tesouraria')
             .find()
             .sort({ data: -1 })
@@ -682,14 +980,23 @@ app.get("/api/relatorio-financeiro", async (req, res) => {
 
         doc.end();
     } catch (err) {
-        console.error('Erro ao gerar relatório:', err);
+        console.error('💥 Erro ao gerar relatório:', err);
         res.status(500).json({ success: false, message: 'Erro ao gerar relatório' });
     }
 });
 
+// ==================== ROTAS DE SISTEMA ====================
+
 // Rota de teste para validar funcionamento do sistema
 app.get('/api/teste', async (req, res) => {
     try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Database não conectada' 
+            });
+        }
+
         const collections = await db.listCollections().toArray();
         const collectionNames = collections.map(col => col.name);
         
@@ -716,7 +1023,7 @@ app.get('/api/teste', async (req, res) => {
         
         res.json(systemStatus);
     } catch (err) {
-        console.error('Erro no teste do sistema:', err);
+        console.error('💥 Erro no teste do sistema:', err);
         res.status(500).json({ 
             success: false, 
             message: 'Erro ao verificar sistema',
@@ -730,62 +1037,14 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Rota para health check
-app.get('/api/health', async (req, res) => {
-    try {
-        const healthStatus = {
-            status: 'OK',
-            timestamp: new Date().toISOString(),
-            server: {
-                environment: process.env.NODE_ENV || 'development',
-                node_version: process.version,
-                uptime: process.uptime()
-            },
-            database: {
-                connected: !!db,
-                database_name: db ? 'senac_sistema' : 'disconnected'
-            },
-            environment: {
-                mongodb_uri: process.env.MONGODB_URI ? 'DEFINIDA' : 'NÃO DEFINIDA',
-                email_host: process.env.EMAIL_HOST ? 'DEFINIDO' : 'NÃO DEFINIDO'
-            }
-        };
-
-        // Testa a conexão com o MongoDB se estiver conectado
-        if (db) {
-            try {
-                await db.command({ ping: 1 });
-                healthStatus.database.ping = 'OK';
-            } catch (pingError) {
-                healthStatus.database.ping = 'ERROR';
-                healthStatus.database.ping_error = pingError.message;
-                healthStatus.status = 'DEGRADED';
-            }
-        } else {
-            healthStatus.status = 'ERROR';
-            healthStatus.database.connection_error = 'Database não inicializada';
-        }
-
-        res.json(healthStatus);
-    } catch (error) {
-        res.status(500).json({
-            status: 'ERROR',
-            timestamp: new Date().toISOString(),
-            error: error.message
-        });
-    }
-});
-
 // Middleware de erro global
-app.use('/api/*', (req, res, next) => {
-    if (!db && req.method !== 'GET' && !req.path.includes('/health') && !req.path.includes('/debug')) {
-        return res.status(503).json({
-            success: false,
-            message: 'Serviço temporariamente indisponível. Banco de dados não conectado.',
-            timestamp: new Date().toISOString()
-        });
-    }
-    next();
+app.use((err, req, res, next) => {
+    console.error('💥 Erro não tratado:', err);
+    res.status(500).json({ 
+        success: false, 
+        message: 'Erro interno do servidor',
+        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
+    });
 });
 
 // Rota 404
