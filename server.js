@@ -985,6 +985,476 @@ app.get("/api/relatorio-financeiro", async (req, res) => {
     }
 });
 
+// Rota para relatório de contas a pagar
+app.get("/api/relatorio-contas-pagar", async (req, res) => {
+    try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
+        const contas = await db.collection('contas_pagar')
+            .find()
+            .sort({ vencimento: 1 })
+            .toArray();
+
+        const doc = new PDFDocument({
+            margin: 40,
+            size: 'A4',
+            font: 'Helvetica'
+        });
+
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio-contas-pagar-${moment().format('YYYY-MM-DD')}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        doc.pipe(res);
+
+        const colors = {
+            primary: '#2c3e50',
+            success: '#27ae60',
+            danger: '#e74c3c',
+            light: '#f5f5f5'
+        };
+
+        // Cabeçalho
+        doc.image(path.join(__dirname, 'public', 'assets', 'senac-logo-0.png'), 40, 30, { width: 80 })
+           .fontSize(18)
+           .fillColor(colors.primary)
+           .text('RELATÓRIO - CONTAS A PAGAR', 130, 45);
+
+        // Resumo
+        const totalPagar = contas.reduce((sum, conta) => sum + parseFloat(conta.valor), 0);
+        const contasPendentes = contas.filter(conta => conta.status === 'pendente').length;
+
+        doc.rect(40, 90, 515, 50)
+           .fill(colors.light)
+           .stroke(colors.primary);
+
+        doc.fontSize(12)
+           .fillColor(colors.primary)
+           .text('RESUMO', 50, 100, { underline: true });
+
+        doc.fontSize(10)
+           .text('Total a Pagar:', 50, 120)
+           .text('Contas Pendentes:', 200, 120)
+           .text('Total de Contas:', 350, 120);
+
+        doc.fontSize(12)
+           .fillColor(colors.danger)
+           .text(`R$ ${totalPagar.toFixed(2)}`, 50, 135)
+           .fillColor(colors.primary)
+           .text(contasPendentes.toString(), 200, 135)
+           .text(contas.length.toString(), 350, 135);
+
+        // Tabela
+        const tableTop = 160;
+        
+        doc.fontSize(14)
+           .fillColor(colors.primary)
+           .text('CONTAS A PAGAR', 40, tableTop, { underline: true });
+
+        if (contas.length > 0) {
+            // Cabeçalho da tabela
+            doc.font('Helvetica-Bold')
+               .fontSize(10)
+               .fillColor('#fff')
+               .rect(40, tableTop + 30, 515, 20)
+               .fill(colors.primary);
+
+            doc.fillColor('#ffffff')
+               .text('Descrição', 45, tableTop + 35, { width: 200 })
+               .text('Valor (R$)', 255, tableTop + 35, { width: 100, align: "right" })
+               .text('Vencimento', 365, tableTop + 35, { width: 100, align: "center" })
+               .text('Status', 475, tableTop + 35, { width: 70, align: "center" });
+
+            // Linhas da tabela
+            let y = tableTop + 50;
+            contas.forEach((conta, index) => {
+                doc.rect(40, y, 515, 20)
+                   .fill(index % 2 === 0 ? '#fff' : colors.light);
+
+                doc.fontSize(9)
+                   .fillColor(colors.primary)
+                   .text(conta.descricao, 45, y + 5, { width: 200 })
+                   .fillColor(colors.danger)
+                   .text(parseFloat(conta.valor).toFixed(2), 255, y + 5, { width: 100, align: "right" })
+                   .fillColor(colors.primary)
+                   .text(moment(conta.vencimento).format('DD/MM/YYYY'), 365, y + 5, { width: 100, align: "center" })
+                   .fillColor(conta.status === 'pago' ? colors.success : colors.danger)
+                   .text(conta.status.toUpperCase(), 475, y + 5, { width: 70, align: "center" });
+
+                y += 20;
+            });
+        } else {
+            doc.fontSize(12)
+               .fillColor(colors.primary)
+               .text('Nenhuma conta a pagar encontrada.', 50, tableTop + 50);
+        }
+
+        doc.end();
+    } catch (err) {
+        console.error('💥 Erro ao gerar relatório:', err);
+        res.status(500).json({ success: false, message: 'Erro ao gerar relatório' });
+    }
+});
+
+// Rota para relatório de contas a receber
+app.get("/api/relatorio-contas-receber", async (req, res) => {
+    try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
+        const contas = await db.collection('contas_receber')
+            .find()
+            .sort({ vencimento: 1 })
+            .toArray();
+
+        const doc = new PDFDocument({
+            margin: 40,
+            size: 'A4',
+            font: 'Helvetica'
+        });
+
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio-contas-receber-${moment().format('YYYY-MM-DD')}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        doc.pipe(res);
+
+        const colors = {
+            primary: '#2c3e50',
+            success: '#27ae60',
+            danger: '#e74c3c',
+            light: '#f5f5f5'
+        };
+
+        // Cabeçalho
+        doc.image(path.join(__dirname, 'public', 'assets', 'senac-logo-0.png'), 40, 30, { width: 80 })
+           .fontSize(18)
+           .fillColor(colors.primary)
+           .text('RELATÓRIO - CONTAS A RECEBER', 130, 45);
+
+        // Resumo
+        const totalReceber = contas.reduce((sum, conta) => sum + parseFloat(conta.valor), 0);
+        const contasPendentes = contas.filter(conta => conta.status === 'pendente').length;
+
+        doc.rect(40, 90, 515, 50)
+           .fill(colors.light)
+           .stroke(colors.primary);
+
+        doc.fontSize(12)
+           .fillColor(colors.primary)
+           .text('RESUMO', 50, 100, { underline: true });
+
+        doc.fontSize(10)
+           .text('Total a Receber:', 50, 120)
+           .text('Contas Pendentes:', 200, 120)
+           .text('Total de Contas:', 350, 120);
+
+        doc.fontSize(12)
+           .fillColor(colors.success)
+           .text(`R$ ${totalReceber.toFixed(2)}`, 50, 135)
+           .fillColor(colors.primary)
+           .text(contasPendentes.toString(), 200, 135)
+           .text(contas.length.toString(), 350, 135);
+
+        // Tabela
+        const tableTop = 160;
+        
+        doc.fontSize(14)
+           .fillColor(colors.primary)
+           .text('CONTAS A RECEBER', 40, tableTop, { underline: true });
+
+        if (contas.length > 0) {
+            // Cabeçalho da tabela
+            doc.font('Helvetica-Bold')
+               .fontSize(10)
+               .fillColor('#fff')
+               .rect(40, tableTop + 30, 515, 20)
+               .fill(colors.primary);
+
+            doc.fillColor('#ffffff')
+               .text('Descrição', 45, tableTop + 35, { width: 200 })
+               .text('Valor (R$)', 255, tableTop + 35, { width: 100, align: "right" })
+               .text('Vencimento', 365, tableTop + 35, { width: 100, align: "center" })
+               .text('Status', 475, tableTop + 35, { width: 70, align: "center" });
+
+            // Linhas da tabela
+            let y = tableTop + 50;
+            contas.forEach((conta, index) => {
+                doc.rect(40, y, 515, 20)
+                   .fill(index % 2 === 0 ? '#fff' : colors.light);
+
+                doc.fontSize(9)
+                   .fillColor(colors.primary)
+                   .text(conta.descricao, 45, y + 5, { width: 200 })
+                   .fillColor(colors.success)
+                   .text(parseFloat(conta.valor).toFixed(2), 255, y + 5, { width: 100, align: "right" })
+                   .fillColor(colors.primary)
+                   .text(moment(conta.vencimento).format('DD/MM/YYYY'), 365, y + 5, { width: 100, align: "center" })
+                   .fillColor(conta.status === 'recebido' ? colors.success : colors.danger)
+                   .text(conta.status.toUpperCase(), 475, y + 5, { width: 70, align: "center" });
+
+                y += 20;
+            });
+        } else {
+            doc.fontSize(12)
+               .fillColor(colors.primary)
+               .text('Nenhuma conta a receber encontrada.', 50, tableTop + 50);
+        }
+
+        doc.end();
+    } catch (err) {
+        console.error('💥 Erro ao gerar relatório:', err);
+        res.status(500).json({ success: false, message: 'Erro ao gerar relatório' });
+    }
+});
+
+// Rota para relatório de vendas
+app.get("/api/relatorio-vendas", async (req, res) => {
+    try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
+        const vendas = await db.collection('vendas')
+            .find()
+            .sort({ data: -1 })
+            .toArray();
+
+        const doc = new PDFDocument({
+            margin: 40,
+            size: 'A4',
+            font: 'Helvetica'
+        });
+
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio-vendas-${moment().format('YYYY-MM-DD')}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        doc.pipe(res);
+
+        const colors = {
+            primary: '#2c3e50',
+            success: '#27ae60',
+            danger: '#e74c3c',
+            light: '#f5f5f5'
+        };
+
+        // Cabeçalho
+        doc.image(path.join(__dirname, 'public', 'assets', 'senac-logo-0.png'), 40, 30, { width: 80 })
+           .fontSize(18)
+           .fillColor(colors.primary)
+           .text('RELATÓRIO DE VENDAS', 130, 45);
+
+        // Resumo
+        const totalVendas = vendas.reduce((sum, venda) => sum + parseFloat(venda.valor), 0);
+        const hoje = new Date();
+        const vendasHoje = vendas.filter(venda => 
+            moment(venda.data).isSame(hoje, 'day')
+        ).length;
+
+        doc.rect(40, 90, 515, 50)
+           .fill(colors.light)
+           .stroke(colors.primary);
+
+        doc.fontSize(12)
+           .fillColor(colors.primary)
+           .text('RESUMO', 50, 100, { underline: true });
+
+        doc.fontSize(10)
+           .text('Total em Vendas:', 50, 120)
+           .text('Vendas Hoje:', 200, 120)
+           .text('Total de Vendas:', 350, 120);
+
+        doc.fontSize(12)
+           .fillColor(colors.success)
+           .text(`R$ ${totalVendas.toFixed(2)}`, 50, 135)
+           .fillColor(colors.primary)
+           .text(vendasHoje.toString(), 200, 135)
+           .text(vendas.length.toString(), 350, 135);
+
+        // Tabela
+        const tableTop = 160;
+        
+        doc.fontSize(14)
+           .fillColor(colors.primary)
+           .text('VENDAS REALIZADAS', 40, tableTop, { underline: true });
+
+        if (vendas.length > 0) {
+            // Cabeçalho da tabela
+            doc.font('Helvetica-Bold')
+               .fontSize(10)
+               .fillColor('#fff')
+               .rect(40, tableTop + 30, 515, 20)
+               .fill(colors.primary);
+
+            doc.fillColor('#ffffff')
+               .text('Cliente', 45, tableTop + 35, { width: 120 })
+               .text('Produto', 175, tableTop + 35, { width: 120 })
+               .text('Valor (R$)', 305, tableTop + 35, { width: 80, align: "right" })
+               .text('Data', 395, tableTop + 35, { width: 80, align: "center" })
+               .text('Nota Fiscal', 485, tableTop + 35, { width: 70, align: "center" });
+
+            // Linhas da tabela
+            let y = tableTop + 50;
+            vendas.forEach((venda, index) => {
+                doc.rect(40, y, 515, 20)
+                   .fill(index % 2 === 0 ? '#fff' : colors.light);
+
+                doc.fontSize(9)
+                   .fillColor(colors.primary)
+                   .text(venda.cliente, 45, y + 5, { width: 120 })
+                   .text(venda.produto, 175, y + 5, { width: 120 })
+                   .fillColor(colors.success)
+                   .text(parseFloat(venda.valor).toFixed(2), 305, y + 5, { width: 80, align: "right" })
+                   .fillColor(colors.primary)
+                   .text(moment(venda.data).format('DD/MM/YYYY'), 395, y + 5, { width: 80, align: "center" })
+                   .text(venda.numeroNota, 485, y + 5, { width: 70, align: "center" });
+
+                y += 20;
+            });
+        } else {
+            doc.fontSize(12)
+               .fillColor(colors.primary)
+               .text('Nenhuma venda encontrada.', 50, tableTop + 50);
+        }
+
+        doc.end();
+    } catch (err) {
+        console.error('💥 Erro ao gerar relatório:', err);
+        res.status(500).json({ success: false, message: 'Erro ao gerar relatório' });
+    }
+});
+
+// Rota para relatório de estoque
+app.get("/api/relatorio-estoque", async (req, res) => {
+    try {
+        if (!isDbConnected || !db) {
+            return res.status(503).json({ 
+                success: false, 
+                message: 'Serviço temporariamente indisponível.' 
+            });
+        }
+
+        const estoque = await db.collection('estoque')
+            .find()
+            .sort({ data_entrada: -1 })
+            .toArray();
+
+        const doc = new PDFDocument({
+            margin: 40,
+            size: 'A4',
+            font: 'Helvetica'
+        });
+
+        res.setHeader('Content-Disposition', `attachment; filename="relatorio-estoque-${moment().format('YYYY-MM-DD')}.pdf"`);
+        res.setHeader('Content-Type', 'application/pdf');
+        doc.pipe(res);
+
+        const colors = {
+            primary: '#2c3e50',
+            success: '#27ae60',
+            danger: '#e74c3c',
+            light: '#f5f5f5'
+        };
+
+        // Cabeçalho
+        doc.image(path.join(__dirname, 'public', 'assets', 'senac-logo-0.png'), 40, 30, { width: 80 })
+           .fontSize(18)
+           .fillColor(colors.primary)
+           .text('RELATÓRIO DE ESTOQUE', 130, 45);
+
+        // Resumo
+        const totalItens = estoque.reduce((sum, item) => sum + item.quantidade, 0);
+        const totalValor = estoque.reduce((sum, item) => sum + item.valor_total, 0);
+        const produtosUnicos = [...new Set(estoque.map(item => item.produto))].length;
+
+        doc.rect(40, 90, 515, 50)
+           .fill(colors.light)
+           .stroke(colors.primary);
+
+        doc.fontSize(12)
+           .fillColor(colors.primary)
+           .text('RESUMO', 50, 100, { underline: true });
+
+        doc.fontSize(10)
+           .text('Total de Itens:', 50, 120)
+           .text('Produtos Diferentes:', 200, 120)
+           .text('Valor Total (R$):', 350, 120);
+
+        doc.fontSize(12)
+           .fillColor(colors.primary)
+           .text(totalItens.toString(), 50, 135)
+           .text(produtosUnicos.toString(), 200, 135)
+           .fillColor(colors.success)
+           .text(totalValor.toFixed(2), 350, 135);
+
+        // Tabela
+        const tableTop = 160;
+        
+        doc.fontSize(14)
+           .fillColor(colors.primary)
+           .text('ESTOQUE ATUAL', 40, tableTop, { underline: true });
+
+        if (estoque.length > 0) {
+            // Agrupa por produto
+            const produtosAgrupados = {};
+            estoque.forEach(item => {
+                if (!produtosAgrupados[item.produto]) {
+                    produtosAgrupados[item.produto] = {
+                        quantidade: 0,
+                        valor_total: 0
+                    };
+                }
+                produtosAgrupados[item.produto].quantidade += item.quantidade;
+                produtosAgrupados[item.produto].valor_total += item.valor_total;
+            });
+
+            // Cabeçalho da tabela
+            doc.font('Helvetica-Bold')
+               .fontSize(10)
+               .fillColor('#fff')
+               .rect(40, tableTop + 30, 515, 20)
+               .fill(colors.primary);
+
+            doc.fillColor('#ffffff')
+               .text('Produto', 45, tableTop + 35, { width: 250 })
+               .text('Quantidade', 305, tableTop + 35, { width: 100, align: "right" })
+               .text('Valor Total (R$)', 415, tableTop + 35, { width: 140, align: "right" });
+
+            // Linhas da tabela
+            let y = tableTop + 50;
+            Object.keys(produtosAgrupados).forEach((produto, index) => {
+                doc.rect(40, y, 515, 20)
+                   .fill(index % 2 === 0 ? '#fff' : colors.light);
+
+                doc.fontSize(9)
+                   .fillColor(colors.primary)
+                   .text(produto, 45, y + 5, { width: 250 })
+                   .text(produtosAgrupados[produto].quantidade.toString(), 305, y + 5, { width: 100, align: "right" })
+                   .fillColor(colors.success)
+                   .text(produtosAgrupados[produto].valor_total.toFixed(2), 415, y + 5, { width: 140, align: "right" });
+
+                y += 20;
+            });
+        } else {
+            doc.fontSize(12)
+               .fillColor(colors.primary)
+               .text('Nenhum item em estoque.', 50, tableTop + 50);
+        }
+
+        doc.end();
+    } catch (err) {
+        console.error('💥 Erro ao gerar relatório:', err);
+        res.status(500).json({ success: false, message: 'Erro ao gerar relatório' });
+    }
+});
+
 // ==================== ROTAS DE SISTEMA ====================
 
 // Rota de teste para validar funcionamento do sistema

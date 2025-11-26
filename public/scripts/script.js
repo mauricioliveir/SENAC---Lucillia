@@ -1,8 +1,8 @@
 const API_BASE = window.location.origin;
 
 document.addEventListener("DOMContentLoaded", function () {
-    let isLoggedIn = sessionStorage.getItem('isLoggedIn');
-
+        let isLoggedIn = sessionStorage.getItem('isLoggedIn');
+        
     if (isLoggedIn !== 'true') {
         window.location.href = './index.html';
     } else {
@@ -20,7 +20,10 @@ document.addEventListener("DOMContentLoaded", function () {
         loadUserName();
         loadDashboardStats();
         initSubNavigation();
-        loadFuncionariosList();
+        loadFuncionariosTable();
+        
+        // Inicializa os event listeners do formulário de funcionários
+        initFuncionariosForm();
     }
 });
 
@@ -85,6 +88,19 @@ function initNavigation() {
         if (targetSection && targetLink) {
             targetSection.classList.add("active");
             targetLink.classList.add("active");
+            
+            // Carrega dados específicos quando a seção é ativada
+            if (sectionId === 'dep-pessoal') {
+                loadFuncionariosTable();
+            } else if (sectionId === 'vendas') {
+                loadVendasTable();
+            } else if (sectionId === 'estoque') {
+                loadEstoqueTable();
+            } else if (sectionId === 'financeiro') {
+                atualizarFluxoCaixa();
+                carregarContasPagar();
+                carregarContasReceber();
+            }
         }
     }
 
@@ -263,86 +279,39 @@ function initFormCompletionCheck() {
     checkFormCompletion();
 }
 
-// Função para carregar lista de funcionários
-async function loadFuncionariosList() {
+// Função para carregar lista de funcionários na tabela
+async function loadFuncionariosTable() {
     try {
         const response = await fetch(`${API_BASE}/api/funcionarios`);
         const data = await response.json();
         
         if (data.success) {
             const tbody = document.getElementById('funcionarios-tbody');
-            tbody.innerHTML = '';
-            
-            data.funcionarios.forEach(funcionario => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${funcionario.nome}</td>
-                    <td>${funcionario.cpf}</td>
-                    <td>${funcionario.cargo_admitido}</td>
-                    <td>R$ ${parseFloat(funcionario.salario).toFixed(2)}</td>
-                    <td>${new Date(funcionario.data_admissao).toLocaleDateString('pt-BR')}</td>
-                    <td class="actions">
-                        <button class="btn btn-sm btn-edit" onclick="editFuncionario('${funcionario._id}')">
-                            <i class="fas fa-edit"></i>
-                        </button>
-                        <button class="btn btn-sm btn-delete" onclick="deleteFuncionario('${funcionario._id}')">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </td>
-                `;
-                tbody.appendChild(row);
-            });
+            if (tbody) {
+                tbody.innerHTML = '';
+                
+                data.funcionarios.forEach(funcionario => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${funcionario.nome}</td>
+                        <td>${funcionario.cargo_admitido}</td>
+                        <td>R$ ${parseFloat(funcionario.salario).toFixed(2)}</td>
+                        <td>${new Date(funcionario.data_admissao).toLocaleDateString('pt-BR')}</td>
+                        <td class="actions">
+                            <button class="btn btn-sm btn-edit" onclick="editFuncionario('${funcionario._id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-delete" onclick="deleteFuncionario('${funcionario._id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
         }
     } catch (err) {
         console.error('Erro ao carregar lista de funcionários:', err);
-    }
-}
-
-// Função para buscar funcionários
-async function searchFuncionarios() {
-    const searchTerm = document.getElementById('search-input').value.trim();
-    const resultsDiv = document.getElementById('search-results');
-    
-    if (!searchTerm) {
-        resultsDiv.innerHTML = '<p class="no-results">Digite um termo para buscar</p>';
-        return;
-    }
-    
-    try {
-        const response = await fetch(`${API_BASE}/api/funcionarios`);
-        const data = await response.json();
-        
-        if (data.success) {
-            const filtered = data.funcionarios.filter(funcionario => 
-                funcionario.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                funcionario.cpf.includes(searchTerm) ||
-                funcionario.email.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-            
-            if (filtered.length === 0) {
-                resultsDiv.innerHTML = '<p class="no-results">Nenhum funcionário encontrado</p>';
-                return;
-            }
-            
-            resultsDiv.innerHTML = filtered.map(funcionario => `
-                <div class="search-result-item">
-                    <div class="result-info">
-                        <h4>${funcionario.nome}</h4>
-                        <p><strong>CPF:</strong> ${funcionario.cpf}</p>
-                        <p><strong>Cargo:</strong> ${funcionario.cargo_admitido}</p>
-                        <p><strong>E-mail:</strong> ${funcionario.email}</p>
-                    </div>
-                    <div class="result-actions">
-                        <button class="btn btn-sm btn-edit" onclick="editFuncionario('${funcionario._id}')">
-                            <i class="fas fa-edit"></i> Editar
-                        </button>
-                    </div>
-                </div>
-            `).join('');
-        }
-    } catch (err) {
-        console.error('Erro ao buscar funcionários:', err);
-        resultsDiv.innerHTML = '<p class="error-message">Erro ao buscar funcionários</p>';
     }
 }
 
@@ -373,13 +342,15 @@ async function editFuncionario(id) {
             document.getElementById('data_admissao').value = funcionario.data_admissao.split('T')[0];
             
             // Habilita campos desabilitados pelo CEP
-            document.getElementById('logradouro').disabled = false;
-            document.getElementById('bairro').disabled = false;
-            document.getElementById('cidade').disabled = false;
-            document.getElementById('estado').disabled = false;
+            const logradouroInput = document.getElementById('logradouro');
+            const bairroInput = document.getElementById('bairro');
+            const cidadeInput = document.getElementById('cidade');
+            const estadoInput = document.getElementById('estado');
             
-            // Muda para a aba de cadastro
-            document.querySelector('[data-target="cadastro-funcionario"]').click();
+            if (logradouroInput) logradouroInput.disabled = false;
+            if (bairroInput) bairroInput.disabled = false;
+            if (cidadeInput) cidadeInput.disabled = false;
+            if (estadoInput) estadoInput.disabled = false;
             
             // Altera o formulário para modo edição
             const form = document.getElementById('cadastro-funcionario-form');
@@ -413,8 +384,8 @@ async function deleteFuncionario(id) {
         
         if (data.success) {
             alert('Funcionário deletado com sucesso!');
-            loadFuncionariosList();
-            loadDashboardStats(); // Atualiza as estatísticas
+            loadFuncionariosTable();
+            loadDashboardStats();
         } else {
             alert(data.message);
         }
@@ -424,8 +395,8 @@ async function deleteFuncionario(id) {
     }
 }
 
-// Modificar o event listener do formulário para suportar edição
-document.addEventListener('DOMContentLoaded', function() {
+// Inicializa o formulário de funcionários
+function initFuncionariosForm() {
     const form = document.getElementById('cadastro-funcionario-form');
     
     if (form) {
@@ -473,47 +444,109 @@ document.addEventListener('DOMContentLoaded', function() {
                         this.reset();
                         this.removeAttribute('data-edit-mode');
                         this.removeAttribute('data-edit-id');
-                        document.getElementById('submit-btn').innerHTML = '<i class="fas fa-save"></i> Cadastrar Funcionário';
-                        document.getElementById('submit-btn').disabled = true;
+                        const submitBtn = document.getElementById('submit-btn');
+                        if (submitBtn) {
+                            submitBtn.innerHTML = '<i class="fas fa-save"></i> Cadastrar Funcionário';
+                            submitBtn.disabled = true;
+                        }
                     } else {
                         this.reset();
-                        document.getElementById('submit-btn').disabled = true;
+                        const submitBtn = document.getElementById('submit-btn');
+                        if (submitBtn) {
+                            submitBtn.disabled = true;
+                        }
                     }
                     
                     // Atualiza as listas e estatísticas
-                    loadFuncionariosList();
+                    loadFuncionariosTable();
                     loadDashboardStats();
                     
                 } else {
-                    document.getElementById('error-message').textContent = result.message;
+                    const errorMessage = document.getElementById('error-message');
+                    if (errorMessage) {
+                        errorMessage.textContent = result.message;
+                    }
                 }
             } catch (error) {
                 console.error('Erro ao salvar funcionário:', error);
-                document.getElementById('error-message').textContent = 'Erro ao conectar ao servidor.';
+                const errorMessage = document.getElementById('error-message');
+                if (errorMessage) {
+                    errorMessage.textContent = 'Erro ao conectar ao servidor.';
+                }
             }
         });
     }
-    
-    // Event listeners para busca
-    const searchBtn = document.getElementById('search-btn');
-    if (searchBtn) {
-        searchBtn.addEventListener('click', searchFuncionarios);
-    }
-    
-    const searchInput = document.getElementById('search-input');
-    if (searchInput) {
-        searchInput.addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                searchFuncionarios();
+}
+
+// Função para carregar tabela de vendas
+async function loadVendasTable() {
+    try {
+        const response = await fetch(`${API_BASE}/api/vendas`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const tbody = document.getElementById('vendas-tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                
+                data.vendas.forEach(venda => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${venda.cliente}</td>
+                        <td>${venda.produto}</td>
+                        <td>R$ ${parseFloat(venda.valor).toFixed(2)}</td>
+                        <td>${new Date(venda.data).toLocaleDateString('pt-BR')}</td>
+                        <td>${venda.numeroNota}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
             }
-        });
+        }
+    } catch (err) {
+        console.error('Erro ao carregar vendas:', err);
     }
-    
-    const refreshFuncionarios = document.getElementById('refresh-funcionarios');
-    if (refreshFuncionarios) {
-        refreshFuncionarios.addEventListener('click', loadFuncionariosList);
+}
+
+// Função para carregar tabela de estoque
+async function loadEstoqueTable() {
+    try {
+        const response = await fetch(`${API_BASE}/api/estoque`);
+        const data = await response.json();
+        
+        if (data.success) {
+            const tbody = document.getElementById('estoque-tbody');
+            if (tbody) {
+                tbody.innerHTML = '';
+                
+                // Agrupa por produto para mostrar quantidade total
+                const produtosAgrupados = {};
+                
+                data.estoque.forEach(item => {
+                    if (!produtosAgrupados[item.produto]) {
+                        produtosAgrupados[item.produto] = {
+                            quantidade: 0,
+                            valor_total: 0
+                        };
+                    }
+                    produtosAgrupados[item.produto].quantidade += item.quantidade;
+                    produtosAgrupados[item.produto].valor_total += item.valor_total;
+                });
+                
+                Object.keys(produtosAgrupados).forEach(produto => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${produto}</td>
+                        <td>${produtosAgrupados[produto].quantidade}</td>
+                        <td>R$ ${produtosAgrupados[produto].valor_total.toFixed(2)}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Erro ao carregar estoque:', err);
     }
-});
+}
 
 // Função para enviar dados de tesouraria
 function initTesouraria() {
@@ -563,6 +596,38 @@ function initTesouraria() {
             window.open(`${API_BASE}/api/relatorio-financeiro`, '_blank');
         });
     }
+    
+    // Botão para relatório de contas a pagar
+    const gerarRelatorioPagar = document.getElementById('gerar-relatorio-pagar');
+    if (gerarRelatorioPagar) {
+        gerarRelatorioPagar.addEventListener('click', () => {
+            window.open(`${API_BASE}/api/relatorio-contas-pagar`, '_blank');
+        });
+    }
+    
+    // Botão para relatório de contas a receber
+    const gerarRelatorioReceber = document.getElementById('gerar-relatorio-receber');
+    if (gerarRelatorioReceber) {
+        gerarRelatorioReceber.addEventListener('click', () => {
+            window.open(`${API_BASE}/api/relatorio-contas-receber`, '_blank');
+        });
+    }
+    
+    // Botão para relatório de vendas
+    const gerarRelatorioVendas = document.getElementById('gerar-relatorio-vendas');
+    if (gerarRelatorioVendas) {
+        gerarRelatorioVendas.addEventListener('click', () => {
+            window.open(`${API_BASE}/api/relatorio-vendas`, '_blank');
+        });
+    }
+    
+    // Botão para relatório de estoque
+    const gerarRelatorioEstoque = document.getElementById('gerar-relatorio-estoque');
+    if (gerarRelatorioEstoque) {
+        gerarRelatorioEstoque.addEventListener('click', () => {
+            window.open(`${API_BASE}/api/relatorio-estoque`, '_blank');
+        });
+    }
 }
 
 // Função para atualizar o fluxo de caixa
@@ -591,6 +656,12 @@ async function atualizarFluxoCaixa() {
     } catch (err) {
         console.error('Erro ao atualizar fluxo de caixa:', err);
     }
+}
+
+// Função para formatar datas nas listas
+function formatarDataParaLista(dataString) {
+    const data = new Date(dataString);
+    return data.toLocaleDateString('pt-BR');
 }
 
 // Função para contas a pagar
@@ -642,10 +713,12 @@ async function carregarContasPagar() {
                 data.contas.forEach(conta => {
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        <strong>${conta.descricao}</strong> - 
-                        R$ ${parseFloat(conta.valor).toFixed(2)} - 
-                        Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
-                        <span class="status-${conta.status}">${conta.status}</span>
+                        <div class="conta-item">
+                            <strong>${conta.descricao}</strong><br>
+                            <small>Valor: R$ ${parseFloat(conta.valor).toFixed(2)}</small><br>
+                            <small>Venc: ${formatarDataParaLista(conta.vencimento)}</small><br>
+                            <span class="status-${conta.status}">${conta.status}</span>
+                        </div>
                     `;
                     lista.appendChild(li);
                 });
@@ -705,10 +778,12 @@ async function carregarContasReceber() {
                 data.contas.forEach(conta => {
                     const li = document.createElement('li');
                     li.innerHTML = `
-                        <strong>${conta.descricao}</strong> - 
-                        R$ ${parseFloat(conta.valor).toFixed(2)} - 
-                        Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
-                        <span class="status-${conta.status}">${conta.status}</span>
+                        <div class="conta-item">
+                            <strong>${conta.descricao}</strong><br>
+                            <small>Valor: R$ ${parseFloat(conta.valor).toFixed(2)}</small><br>
+                            <small>Venc: ${formatarDataParaLista(conta.vencimento)}</small><br>
+                            <span class="status-${conta.status}">${conta.status}</span>
+                        </div>
                     `;
                     lista.appendChild(li);
                 });
@@ -742,6 +817,7 @@ function initVendas() {
                     alert('Venda registrada com sucesso!');
                     formVenda.reset();
                     carregarUltimaVenda(data.venda);
+                    loadVendasTable();
                     loadDashboardStats();
                 } else {
                     alert(data.message || 'Erro ao registrar venda.');
@@ -794,6 +870,7 @@ function initEstoque() {
                     alert('Entrada no estoque registrada com sucesso!');
                     formEstoque.reset();
                     carregarEntradasEstoque();
+                    loadEstoqueTable();
                     loadDashboardStats();
                 } else {
                     alert(data.message || 'Erro ao registrar entrada no estoque.');
@@ -850,13 +927,11 @@ function setupLogout() {
         
         console.log('🚪 Iniciando logout...');
         
-        // Limpa toda a sessão (mais completo)
         sessionStorage.clear();
-        localStorage.removeItem('isLoggedIn'); // Se estiver usando localStorage também
+        localStorage.removeItem('isLoggedIn'); 
         
         console.log('✅ Sessão limpa. Redirecionando...');
         
-        // Redireciona após um pequeno delay para ver os logs
         setTimeout(() => {
             window.location.href = 'index.html';
         }, 100);

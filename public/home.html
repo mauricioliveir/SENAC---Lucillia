@@ -253,6 +253,29 @@
                     <p id="error-message" class="error-message"></p>
                 </form>
             </div>
+
+            <div class="content-card">
+                <h2 class="card-title">
+                    <i class="fas fa-list"></i>
+                    Funcionários Cadastrados
+                </h2>
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Nome</th>
+                                <th>Cargo</th>
+                                <th>Salário (R$)</th>
+                                <th>Data de Admissão</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="funcionarios-tbody">
+                            <!-- Os dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </section>
 
         <!-- Seção Financeiro -->
@@ -349,6 +372,10 @@
                     <div class="contas-list">
                         <h3>Contas Cadastradas</h3>
                         <ul id="lista-contas-pagar"></ul>
+                        <button id="gerar-relatorio-pagar" class="btn btn-secondary">
+                            <i class="fas fa-file-pdf"></i>
+                            Gerar Relatório (PDF)
+                            </button>
                     </div>
                 </div>
 
@@ -381,6 +408,10 @@
                     <div class="contas-list">
                         <h3>Contas Cadastradas</h3>
                         <ul id="lista-contas-receber"></ul>
+                        <button id="gerar-relatorio-receber" class="btn btn-secondary">
+                            <i class="fas fa-file-pdf"></i>
+                            Gerar Relatório (PDF)
+                        </button>
                     </div>
                 </div>
             </div>
@@ -433,6 +464,29 @@
                     </button>
                 </div>
             </div>
+
+             <div class="content-card">
+                    <h2 class="card-title">
+                        <i class="fas fa-list"></i>
+                        Vendas Realizadas
+                    </h2>
+                    <div class="table-container">
+                        <table class="modern-table">
+                            <thead>
+                                <tr>
+                                    <th>Cliente</th>
+                                    <th>Produto</th>
+                                    <th>Valor (R$)</th>
+                                    <th>Data</th>
+                                    <th>Nota Fiscal</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vendas-tbody">
+                                <!-- Os dados serão preenchidos via JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
         </section>
 
         <!-- Seção Estoque -->
@@ -488,6 +542,28 @@
                     </button>
                 </div>
             </div>
+
+            <div class="content-card">
+                <h2 class="card-title">
+                    <i class="fas fa-boxes"></i>
+                    Estoque Atual
+                </h2>
+                <div class="table-container">
+                    <table class="modern-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th>Quantidade</th>
+                                <th>Valor Total (R$)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="estoque-tbody">
+                            <!-- Os dados serão preenchidos via JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </section>
     </main>
 

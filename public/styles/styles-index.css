@@ -435,13 +435,133 @@ section.active {
     background: #c0392b;
 }
 
-/* Finance Grid */
+/* Layout Específico para Financeiro */
 .finance-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.finance-top-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
     gap: 2rem;
 }
 
+.finance-bottom-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+}
+
+/* Ajustes para formulários compactos */
+.compact-form .form-row.compact {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+/* Campo de data ajustado */
+.date-input {
+    max-width: 100%;
+    font-size: 0.9rem;
+}
+
+/* Ajustes para listas de contas */
+.contas-list {
+    margin-top: 1.5rem;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid var(--cor-borda);
+    border-radius: 8px;
+    padding: 1rem;
+    background: var(--cor-fundo);
+}
+
+.contas-list h3 {
+    font-family: 'Montserrat', sans-serif;
+    color: var(--cor-primaria);
+    margin-bottom: 1rem;
+    font-size: 1rem;
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 0.5rem;
+}
+
+.contas-list ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.contas-list li {
+    background: var(--cor-card);
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    border-radius: 6px;
+    border-left: 3px solid var(--cor-primaria);
+    font-size: 0.875rem;
+    line-height: 1.4;
+}
+
+.contas-list li:last-child {
+    margin-bottom: 0;
+}
+
+/* Estilo para itens individuais das contas */
+.conta-item {
+    line-height: 1.4;
+}
+
+.conta-item strong {
+    color: var(--cor-primaria);
+    font-size: 0.9rem;
+}
+
+.conta-item small {
+    color: var(--cor-texto-claro);
+    font-size: 0.8rem;
+}
+
+.conta-item .status-pendente,
+.conta-item .status-pago,
+.conta-item .status-recebido {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 12px;
+    display: inline-block;
+    margin-top: 0.25rem;
+}
+
+.conta-item .status-pendente {
+    background: rgba(243, 156, 18, 0.1);
+    color: var(--cor-alerta);
+}
+
+.conta-item .status-pago,
+.conta-item .status-recebido {
+    background: rgba(39, 174, 96, 0.1);
+    color: var(--cor-sucesso);
+}
+
+/* Status das contas */
+.status-pendente {
+    color: var(--cor-alerta);
+    font-weight: 600;
+}
+
+.status-pago, .status-recebido {
+    color: var(--cor-sucesso);
+    font-weight: 600;
+}
+
+/* Botões de relatório ajustados */
+.content-card .btn-secondary {
+    margin-top: 1rem;
+    width: 100%;
+    justify-content: center;
+}
+
+/* Content Grid */
 .content-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
@@ -487,26 +607,22 @@ section.active {
 }
 
 /* Lists */
-.contas-list,
 .estoque-list {
     margin-top: 1.5rem;
 }
 
-.contas-list h3,
 .estoque-list h3 {
     font-family: 'Montserrat', sans-serif;
     color: var(--cor-primaria);
     margin-bottom: 1rem;
 }
 
-.contas-list ul,
 .estoque-list ul {
     list-style: none;
     max-height: 300px;
     overflow-y: auto;
 }
 
-.contas-list li,
 .estoque-list li {
     background: var(--cor-fundo);
     padding: 1rem;
@@ -595,12 +711,13 @@ section.active {
 
 .subsection.active {
     display: block;
-    /* Search Section */
-    .search-section {
-        display: flex;
-        flex-direction: column;
-        gap: 1.5rem;
-    }
+}
+
+/* Search Section */
+.search-section {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .search-box {
@@ -662,6 +779,8 @@ section.active {
 .table-container {
     overflow-x: auto;
     margin-top: 1rem;
+    border-radius: 8px;
+    box-shadow: var(--sombra);
 }
 
 .modern-table {
@@ -670,7 +789,6 @@ section.active {
     background: var(--cor-card);
     border-radius: 8px;
     overflow: hidden;
-    box-shadow: var(--sombra);
 }
 
 .modern-table th {
@@ -680,15 +798,21 @@ section.active {
     text-align: left;
     font-family: 'Montserrat', sans-serif;
     font-weight: 600;
+    font-size: 0.9rem;
 }
 
 .modern-table td {
     padding: 1rem;
     border-bottom: 1px solid var(--cor-borda);
+    font-size: 0.875rem;
 }
 
 .modern-table tr:hover {
     background: var(--cor-fundo);
+}
+
+.modern-table tr:last-child td {
+    border-bottom: none;
 }
 
 .actions {
@@ -696,7 +820,68 @@ section.active {
     gap: 0.5rem;
 }
 
-/* Responsive */
+/* Melhorias para os formulários */
+.compact-form .form-group {
+    margin-bottom: 1rem;
+}
+
+.compact-form .form-group label {
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: var(--cor-texto);
+}
+
+.compact-form .form-group input,
+.compact-form .form-group select {
+    padding: 0.6rem 0.75rem;
+    font-size: 0.9rem;
+    border: 1px solid var(--cor-borda);
+    border-radius: 6px;
+}
+
+.compact-form .form-group input:focus,
+.compact-form .form-group select:focus {
+    border-color: var(--cor-primaria);
+    box-shadow: 0 0 0 2px rgba(3, 59, 119, 0.1);
+}
+
+/* Ajuste específico para campos de data */
+input[type="date"] {
+    min-height: 42px;
+}
+
+/* Espaçamento entre botões */
+.content-card .btn {
+    margin-top: 0.5rem;
+}
+
+.content-card .btn-primary {
+    margin-bottom: 0.5rem;
+}
+
+/* Nota Fiscal Content */
+.nota-fiscal-content {
+    width: 100%;
+}
+
+.nota-fiscal-content h3 {
+    color: var(--cor-primaria);
+    margin-bottom: 1rem;
+    text-align: center;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.nota-fiscal-content p {
+    margin-bottom: 0.5rem;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.nota-fiscal-content p:last-child {
+    border-bottom: none;
+}
+
+/* Ajustes responsivos */
 @media (max-width: 768px) {
     header {
         flex-direction: column;
@@ -726,11 +911,19 @@ section.active {
         grid-template-columns: 1fr;
     }
     
+    .compact-form .form-row.compact {
+        grid-template-columns: 1fr;
+    }
+    
     .stats-grid {
         grid-template-columns: 1fr;
     }
     
-    .finance-grid,
+    .finance-top-row,
+    .finance-bottom-row {
+        grid-template-columns: 1fr;
+    }
+    
     .content-grid {
         grid-template-columns: 1fr;
     }
@@ -771,4 +964,131 @@ section.active {
     .modern-table td {
         padding: 0.5rem;
     }
+    
+    .contas-list {
+        max-height: 150px;
+    }
+}
+
+@media (max-width: 480px) {
+    main {
+        padding: 1rem;
+    }
+    
+    .content-card {
+        padding: 1rem;
+    }
+    
+    .card-title {
+        font-size: 1.2rem;
+    }
+    
+    .finance-top-row,
+    .finance-bottom-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .compact-form .form-row.compact {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+    
+    .date-input {
+        font-size: 0.85rem;
+    }
+    
+    .welcome-card {
+        padding: 2rem 1rem;
+    }
+    
+    .welcome-card h1 {
+        font-size: 2rem;
+    }
+    
+    .section-header h1 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Animações extras */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.modern-table tr {
+    animation: slideIn 0.3s ease-out;
+}
+
+.modern-table tr:nth-child(even) {
+    animation-delay: 0.1s;
+}
+
+/* Scrollbar personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--cor-fundo);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--cor-primaria);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--cor-hover);
+}
+
+/* Estados de loading */
+.loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid var(--cor-primaria);
+    border-top: 2px solid transparent;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Estados de sucesso e erro */
+.success-message {
+    color: var(--cor-sucesso);
+    background: rgba(39, 174, 96, 0.1);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--cor-sucesso);
+    margin-top: 1rem;
+}
+
+.warning-message {
+    color: var(--cor-alerta);
+    background: rgba(243, 156, 18, 0.1);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border-left: 4px solid var(--cor-alerta);
+    margin-top: 1rem;
 }
