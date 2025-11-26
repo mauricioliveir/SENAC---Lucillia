@@ -1,3 +1,6 @@
+const API_BASE = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : 'https://senac-lucillia.vercel.app';
+
+
 document.addEventListener("DOMContentLoaded", function () {
     let isLoggedIn = sessionStorage.getItem('isLoggedIn');
 
@@ -45,7 +48,7 @@ function loadUserName() {
 // Função para carregar estatísticas do dashboard
 async function loadDashboardStats() {
     try {
-        const response = await fetch('/dashboard/stats');
+        const response = await fetch(`${API_BASE}/api/dashboard/stats`);
         const data = await response.json();
         
         if (data.success) {
@@ -265,7 +268,7 @@ function initFormCompletionCheck() {
 // Função para carregar lista de funcionários
 async function loadFuncionariosList() {
     try {
-        const response = await fetch('/funcionarios');
+        const response = await fetch(`${API_BASE}/api/funcionarios`);
         const data = await response.json();
         
         if (data.success) {
@@ -308,7 +311,7 @@ async function searchFuncionarios() {
     }
     
     try {
-        const response = await fetch('/funcionarios');
+        const response = await fetch(`${API_BASE}/api/funcionarios`);
         const data = await response.json();
         
         if (data.success) {
@@ -348,7 +351,7 @@ async function searchFuncionarios() {
 // Função para editar funcionário
 async function editFuncionario(id) {
     try {
-        const response = await fetch(`/funcionarios/${id}`);
+        const response = await fetch(`${API_BASE}/api/funcionarios/${id}`);
         const data = await response.json();
         
         if (data.success) {
@@ -404,7 +407,7 @@ async function deleteFuncionario(id) {
     }
     
     try {
-        const response = await fetch(`/funcionarios/${id}`, {
+        const response = await fetch(`${API_BASE}/api/funcionarios/${id}`, {
             method: 'DELETE'
         });
         
@@ -518,7 +521,7 @@ function initTesouraria() {
             }
 
             try {
-                const response = await fetch('/tesouraria', {
+                const response = await fetch(`${API_BASE}/api/tesouraria`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ tipo, valor, descricao })
@@ -555,7 +558,7 @@ function initTesouraria() {
 // Função para atualizar o fluxo de caixa
 async function atualizarFluxoCaixa() {
     try {
-        const response = await fetch('/tesouraria');
+        const response = await fetch(`${API_BASE}/api/tesouraria`);
         const data = await response.json();
         const lancamentos = data.lancamentos;
 
@@ -591,7 +594,7 @@ function initContasPagar() {
             const vencimento = document.getElementById('vencimento-pagar').value;
 
             try {
-                const response = await fetch('/contas-pagar', {
+                const response = await fetch(`${API_BASE}/api/contas-pagar`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ descricao, valor, vencimento })
@@ -618,7 +621,7 @@ function initContasPagar() {
 
 async function carregarContasPagar() {
     try {
-        const response = await fetch('/contas-pagar');
+        const response = await fetch(`${API_BASE}/api/contas-pagar`);
         const data = await response.json();
         
         if (data.success) {
@@ -652,7 +655,7 @@ function initContasReceber() {
             const vencimento = document.getElementById('vencimento-receber').value;
 
             try {
-                const response = await fetch('/contas-receber', {
+                const response = await fetch(`${API_BASE}/api/contas-receber`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ descricao, valor, vencimento })
@@ -679,7 +682,7 @@ function initContasReceber() {
 
 async function carregarContasReceber() {
     try {
-        const response = await fetch('/contas-receber');
+        const response = await fetch(`${API_BASE}/api/contas-receber`);
         const data = await response.json();
         
         if (data.success) {
@@ -713,7 +716,7 @@ function initVendas() {
             const valor = parseFloat(document.getElementById('valor-venda').value);
 
             try {
-                const response = await fetch('/vendas', {
+                const response = await fetch(`${API_BASE}/api/vendas`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ cliente, produto, valor })
@@ -763,7 +766,7 @@ function initEstoque() {
             const nota_fiscal = document.getElementById('nota-fiscal-estoque').value;
 
             try {
-                const response = await fetch('/estoque', {
+                const response = await fetch(`${API_BASE}/estoque`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ produto, quantidade, valor_unitario, nota_fiscal })
@@ -791,7 +794,7 @@ function initEstoque() {
 
 async function carregarEntradasEstoque() {
     try {
-        const response = await fetch('/estoque');
+        const response = await fetch(`${API_BASE}/api/estoque`);
         const data = await response.json();
         
         if (data.success) {
