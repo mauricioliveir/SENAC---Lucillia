@@ -1,21 +1,14 @@
-const API_BASE = window.location.hostname.includes('localhost')
-    ? 'http://localhost:3000/api'
-    : 'https://senac-lucillia.vercel.app/api';
-
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const nodemailer = require('nodemailer');
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
 const path = require('path');
 const moment = require("moment-timezone");
 const { ObjectId } = require('mongodb');
 const database = require('./database');
 
 const app = express();
-const router = express.Router();
 const port = process.env.PORT || 3000;
 
 // Configuração do transporte de e-mail com Nodemailer
@@ -43,8 +36,18 @@ database.connect().then(database => {
     console.error('❌ Erro ao conectar com database:', err);
 });
 
+// Rota para debug das variáveis de ambiente
+app.get('/api/debug-env', (req, res) => {
+    res.json({
+        mongodb_uri: process.env.MONGODB_URI ? "DEFINIDA" : "NÃO DEFINIDA",
+        node_env: process.env.NODE_ENV,
+        vercel_url: process.env.VERCEL_URL,
+        timestamp: new Date().toISOString()
+    });
+});
+
 // Rota para registro de usuário
-app.post('/register', async (req, res) => {
+app.post('/api/register', async (req, res) => {
     const { nome, email, password } = req.body;
     try {
         const userExists = await db.collection('users').findOne({ email });
@@ -71,7 +74,7 @@ app.post('/register', async (req, res) => {
 });
 
 // Rota para login
-app.post('/login', async (req, res) => {
+app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
     try {
         const user = await db.collection('users').findOne({ email, password });
@@ -91,7 +94,7 @@ app.post('/login', async (req, res) => {
 });
 
 // Rota para solicitação de redefinição de senha
-app.post('/reset-password', async (req, res) => {
+app.post('/api/reset-password', async (req, res) => {
     const { email } = req.body;
     try {
         const user = await db.collection('users').findOne({ email });
@@ -118,7 +121,7 @@ app.post('/reset-password', async (req, res) => {
 });
 
 // Rota para cadastro de funcionário
-app.post('/funcionarios', async (req, res) => {
+app.post('/api/funcionarios', async (req, res) => {
     const { nome, cpf, rg, filiacao, cep, logradouro, numero, bairro, cidade, estado, telefone, email, cargo_admitido, salario, data_admissao } = req.body;
 
     try {
@@ -161,7 +164,7 @@ app.post('/funcionarios', async (req, res) => {
 });
 
 // Rota para buscar funcionário por ID
-app.get('/funcionarios/:id', async (req, res) => {
+app.get('/api/funcionarios/:id', async (req, res) => {
     try {
         const funcionario = await db.collection('funcionarios').findOne({ 
             _id: new ObjectId(req.params.id) 
@@ -179,7 +182,7 @@ app.get('/funcionarios/:id', async (req, res) => {
 });
 
 // Rota para atualizar funcionário
-app.put('/funcionarios/:id', async (req, res) => {
+app.put('/api/funcionarios/:id', async (req, res) => {
     try {
         const { nome, cpf, rg, filiacao, cep, logradouro, numero, bairro, cidade, estado, telefone, email, cargo_admitido, salario, data_admissao } = req.body;
 
@@ -219,7 +222,7 @@ app.put('/funcionarios/:id', async (req, res) => {
 });
 
 // Rota para deletar funcionário
-app.delete('/funcionarios/:id', async (req, res) => {
+app.delete('/api/funcionarios/:id', async (req, res) => {
     try {
         const result = await db.collection('funcionarios').deleteOne({ 
             _id: new ObjectId(req.params.id) 
@@ -237,7 +240,7 @@ app.delete('/funcionarios/:id', async (req, res) => {
 });
 
 // Rota para listar funcionários
-app.get('/funcionarios', async (req, res) => {
+app.get('/api/funcionarios', async (req, res) => {
     try {
         const funcionarios = await db.collection('funcionarios')
             .find()
@@ -251,7 +254,7 @@ app.get('/funcionarios', async (req, res) => {
 });
 
 // Rota para estatísticas do dashboard
-app.get('/dashboard/stats', async (req, res) => {
+app.get('/api/dashboard/stats', async (req, res) => {
     try {
         const [
             totalFuncionarios,
@@ -297,7 +300,7 @@ app.get('/dashboard/stats', async (req, res) => {
 });
 
 // Rota para adicionar um lançamento financeiro
-app.post("/tesouraria", async (req, res) => {
+app.post("/api/tesouraria", async (req, res) => {
     const { tipo, valor, descricao } = req.body;
     
     if (!tipo || isNaN(valor) || valor <= 0 || !descricao) {
@@ -329,7 +332,7 @@ app.post("/tesouraria", async (req, res) => {
 });
 
 // Rota para buscar todos os lançamentos e calcular fluxo de caixa
-app.get("/tesouraria", async (req, res) => {
+app.get("/api/tesouraria", async (req, res) => {
     try {
         const lancamentos = await db.collection('tesouraria')
             .find()
@@ -344,7 +347,7 @@ app.get("/tesouraria", async (req, res) => {
 });
 
 // Rota para contas a pagar
-app.post("/contas-pagar", async (req, res) => {
+app.post("/api/contas-pagar", async (req, res) => {
     const { descricao, valor, vencimento } = req.body;
     
     try {
@@ -373,7 +376,7 @@ app.post("/contas-pagar", async (req, res) => {
 });
 
 // Rota para listar contas a pagar
-app.get("/contas-pagar", async (req, res) => {
+app.get("/api/contas-pagar", async (req, res) => {
     try {
         const contas = await db.collection('contas_pagar')
             .find()
@@ -388,7 +391,7 @@ app.get("/contas-pagar", async (req, res) => {
 });
 
 // Rota para contas a receber
-app.post("/contas-receber", async (req, res) => {
+app.post("/api/contas-receber", async (req, res) => {
     const { descricao, valor, vencimento } = req.body;
     
     try {
@@ -417,7 +420,7 @@ app.post("/contas-receber", async (req, res) => {
 });
 
 // Rota para listar contas a receber
-app.get("/contas-receber", async (req, res) => {
+app.get("/api/contas-receber", async (req, res) => {
     try {
         const contas = await db.collection('contas_receber')
             .find()
@@ -432,7 +435,7 @@ app.get("/contas-receber", async (req, res) => {
 });
 
 // Rota para vendas
-app.post("/vendas", async (req, res) => {
+app.post("/api/vendas", async (req, res) => {
     const { cliente, produto, valor } = req.body;
     
     try {
@@ -463,7 +466,7 @@ app.post("/vendas", async (req, res) => {
 });
 
 // Rota para listar vendas
-app.get("/vendas", async (req, res) => {
+app.get("/api/vendas", async (req, res) => {
     try {
         const vendas = await db.collection('vendas')
             .find()
@@ -478,7 +481,7 @@ app.get("/vendas", async (req, res) => {
 });
 
 // Rota para estoque
-app.post("/estoque", async (req, res) => {
+app.post("/api/estoque", async (req, res) => {
     const { produto, quantidade, valor_unitario, nota_fiscal } = req.body;
     
     try {
@@ -511,7 +514,7 @@ app.post("/estoque", async (req, res) => {
 });
 
 // Rota para listar estoque
-app.get("/estoque", async (req, res) => {
+app.get("/api/estoque", async (req, res) => {
     try {
         const estoque = await db.collection('estoque')
             .find()
@@ -526,7 +529,7 @@ app.get("/estoque", async (req, res) => {
 });
 
 // Rota para gerar relatório financeiro em PDF
-app.get("/relatorio-financeiro", async (req, res) => {
+app.get("/api/relatorio-financeiro", async (req, res) => {
     try {
         const lancamentos = await db.collection('tesouraria')
             .find()
@@ -726,17 +729,10 @@ app.use('*', (req, res) => {
     });
 });
 
-// Iniciar o servidor
-
-
-
-
 // Graceful shutdown
 process.on('SIGINT', async () => {
     console.log('🛑 Encerrando servidor...');
-    await database.disconnect();
     process.exit(0);
 });
 
-app.use('/api', router);
 module.exports = app;

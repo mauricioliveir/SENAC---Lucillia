@@ -1,9 +1,7 @@
-const API_BASE = window.location.hostname.includes('localhost') ? 'http://localhost:3000' : 'https://senac-lucillia.vercel.app';
-
+const API_BASE = window.location.origin;
 
 document.addEventListener("DOMContentLoaded", function () {
     let isLoggedIn = sessionStorage.getItem('isLoggedIn');
-
 
     if (isLoggedIn !== 'true') {
         window.location.href = './index.html';
@@ -430,79 +428,91 @@ async function deleteFuncionario(id) {
 document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('cadastro-funcionario-form');
     
-    form.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const isEditMode = this.getAttribute('data-edit-mode') === 'true';
-        const funcionarioId = this.getAttribute('data-edit-id');
-        
-        const formData = {
-            nome: document.getElementById('nome').value,
-            cpf: document.getElementById('cpf').value,
-            rg: document.getElementById('rg').value,
-            filiacao: document.getElementById('filiacao').value,
-            cep: document.getElementById('cep').value,
-            logradouro: document.getElementById('logradouro').value,
-            numero: document.getElementById('numero').value,
-            bairro: document.getElementById('bairro').value,
-            cidade: document.getElementById('cidade').value,
-            estado: document.getElementById('estado').value,
-            telefone: document.getElementById('telefone').value,
-            email: document.getElementById('email').value,
-            cargo_admitido: document.getElementById('cargo_admitido').value,
-            salario: document.getElementById('salario').value,
-            data_admissao: document.getElementById('data_admissao').value
-        };
-        
-        try {
-            const url = isEditMode ? `/funcionarios/${funcionarioId}` : '/funcionarios';
-            const method = isEditMode ? 'PUT' : 'POST';
+    if (form) {
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
             
-            const response = await fetch(url, {
-                method: method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            });
+            const isEditMode = this.getAttribute('data-edit-mode') === 'true';
+            const funcionarioId = this.getAttribute('data-edit-id');
             
-            const result = await response.json();
+            const formData = {
+                nome: document.getElementById('nome').value,
+                cpf: document.getElementById('cpf').value,
+                rg: document.getElementById('rg').value,
+                filiacao: document.getElementById('filiacao').value,
+                cep: document.getElementById('cep').value,
+                logradouro: document.getElementById('logradouro').value,
+                numero: document.getElementById('numero').value,
+                bairro: document.getElementById('bairro').value,
+                cidade: document.getElementById('cidade').value,
+                estado: document.getElementById('estado').value,
+                telefone: document.getElementById('telefone').value,
+                email: document.getElementById('email').value,
+                cargo_admitido: document.getElementById('cargo_admitido').value,
+                salario: document.getElementById('salario').value,
+                data_admissao: document.getElementById('data_admissao').value
+            };
             
-            if (response.ok) {
-                alert(result.message);
+            try {
+                const url = isEditMode ? `${API_BASE}/api/funcionarios/${funcionarioId}` : `${API_BASE}/api/funcionarios`;
+                const method = isEditMode ? 'PUT' : 'POST';
                 
-                if (isEditMode) {
-                    // Reseta o formulário após edição
-                    this.reset();
-                    this.removeAttribute('data-edit-mode');
-                    this.removeAttribute('data-edit-id');
-                    document.getElementById('submit-btn').innerHTML = '<i class="fas fa-save"></i> Cadastrar Funcionário';
-                    document.getElementById('submit-btn').disabled = true;
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message);
+                    
+                    if (isEditMode) {
+                        // Reseta o formulário após edição
+                        this.reset();
+                        this.removeAttribute('data-edit-mode');
+                        this.removeAttribute('data-edit-id');
+                        document.getElementById('submit-btn').innerHTML = '<i class="fas fa-save"></i> Cadastrar Funcionário';
+                        document.getElementById('submit-btn').disabled = true;
+                    } else {
+                        this.reset();
+                        document.getElementById('submit-btn').disabled = true;
+                    }
+                    
+                    // Atualiza as listas e estatísticas
+                    loadFuncionariosList();
+                    loadDashboardStats();
+                    
                 } else {
-                    this.reset();
-                    document.getElementById('submit-btn').disabled = true;
+                    document.getElementById('error-message').textContent = result.message;
                 }
-                
-                // Atualiza as listas e estatísticas
-                loadFuncionariosList();
-                loadDashboardStats();
-                
-            } else {
-                document.getElementById('error-message').textContent = result.message;
+            } catch (error) {
+                console.error('Erro ao salvar funcionário:', error);
+                document.getElementById('error-message').textContent = 'Erro ao conectar ao servidor.';
             }
-        } catch (error) {
-            console.error('Erro ao salvar funcionário:', error);
-            document.getElementById('error-message').textContent = 'Erro ao conectar ao servidor.';
-        }
-    });
+        });
+    }
     
     // Event listeners para busca
-    document.getElementById('search-btn').addEventListener('click', searchFuncionarios);
-    document.getElementById('search-input').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            searchFuncionarios();
-        }
-    });
+    const searchBtn = document.getElementById('search-btn');
+    if (searchBtn) {
+        searchBtn.addEventListener('click', searchFuncionarios);
+    }
     
-    document.getElementById('refresh-funcionarios').addEventListener('click', loadFuncionariosList);
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchFuncionarios();
+            }
+        });
+    }
+    
+    const refreshFuncionarios = document.getElementById('refresh-funcionarios');
+    if (refreshFuncionarios) {
+        refreshFuncionarios.addEventListener('click', loadFuncionariosList);
+    }
 });
 
 // Função para enviar dados de tesouraria
@@ -550,7 +560,7 @@ function initTesouraria() {
     const gerarRelatorioBtn = document.getElementById('gerar-relatorio-financeiro');
     if (gerarRelatorioBtn) {
         gerarRelatorioBtn.addEventListener('click', () => {
-            window.open('/relatorio-financeiro', '_blank');
+            window.open(`${API_BASE}/api/relatorio-financeiro`, '_blank');
         });
     }
 }
@@ -626,18 +636,20 @@ async function carregarContasPagar() {
         
         if (data.success) {
             const lista = document.getElementById('lista-contas-pagar');
-            lista.innerHTML = '';
-            
-            data.contas.forEach(conta => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>${conta.descricao}</strong> - 
-                    R$ ${parseFloat(conta.valor).toFixed(2)} - 
-                    Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
-                    <span class="status-${conta.status}">${conta.status}</span>
-                `;
-                lista.appendChild(li);
-            });
+            if (lista) {
+                lista.innerHTML = '';
+                
+                data.contas.forEach(conta => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>${conta.descricao}</strong> - 
+                        R$ ${parseFloat(conta.valor).toFixed(2)} - 
+                        Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
+                        <span class="status-${conta.status}">${conta.status}</span>
+                    `;
+                    lista.appendChild(li);
+                });
+            }
         }
     } catch (err) {
         console.error('Erro ao carregar contas a pagar:', err);
@@ -687,18 +699,20 @@ async function carregarContasReceber() {
         
         if (data.success) {
             const lista = document.getElementById('lista-contas-receber');
-            lista.innerHTML = '';
-            
-            data.contas.forEach(conta => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>${conta.descricao}</strong> - 
-                    R$ ${parseFloat(conta.valor).toFixed(2)} - 
-                    Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
-                    <span class="status-${conta.status}">${conta.status}</span>
-                `;
-                lista.appendChild(li);
-            });
+            if (lista) {
+                lista.innerHTML = '';
+                
+                data.contas.forEach(conta => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>${conta.descricao}</strong> - 
+                        R$ ${parseFloat(conta.valor).toFixed(2)} - 
+                        Vencimento: ${new Date(conta.vencimento).toLocaleDateString('pt-BR')} -
+                        <span class="status-${conta.status}">${conta.status}</span>
+                    `;
+                    lista.appendChild(li);
+                });
+            }
         }
     } catch (err) {
         console.error('Erro ao carregar contas a receber:', err);
@@ -742,16 +756,18 @@ function initVendas() {
 
 function carregarUltimaVenda(venda) {
     const notaFiscal = document.getElementById('nota-fiscal');
-    notaFiscal.innerHTML = `
-        <div class="nota-fiscal-content">
-            <h3>NOTA FISCAL</h3>
-            <p><strong>Número:</strong> ${venda.numeroNota}</p>
-            <p><strong>Cliente:</strong> ${venda.cliente}</p>
-            <p><strong>Produto:</strong> ${venda.produto}</p>
-            <p><strong>Valor:</strong> R$ ${parseFloat(venda.valor).toFixed(2)}</p>
-            <p><strong>Data:</strong> ${new Date(venda.data).toLocaleString('pt-BR')}</p>
-        </div>
-    `;
+    if (notaFiscal) {
+        notaFiscal.innerHTML = `
+            <div class="nota-fiscal-content">
+                <h3>NOTA FISCAL</h3>
+                <p><strong>Número:</strong> ${venda.numeroNota}</p>
+                <p><strong>Cliente:</strong> ${venda.cliente}</p>
+                <p><strong>Produto:</strong> ${venda.produto}</p>
+                <p><strong>Valor:</strong> R$ ${parseFloat(venda.valor).toFixed(2)}</p>
+                <p><strong>Data:</strong> ${new Date(venda.data).toLocaleString('pt-BR')}</p>
+            </div>
+        `;
+    }
 }
 
 // Função para estoque
@@ -766,7 +782,7 @@ function initEstoque() {
             const nota_fiscal = document.getElementById('nota-fiscal-estoque').value;
 
             try {
-                const response = await fetch(`${API_BASE}/estoque`, {
+                const response = await fetch(`${API_BASE}/api/estoque`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ produto, quantidade, valor_unitario, nota_fiscal })
@@ -799,20 +815,22 @@ async function carregarEntradasEstoque() {
         
         if (data.success) {
             const lista = document.getElementById('lista-entradas-estoque');
-            lista.innerHTML = '';
-            
-            data.estoque.forEach(entrada => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <strong>${entrada.produto}</strong> - 
-                    Quantidade: ${entrada.quantidade} - 
-                    Valor Unitário: R$ ${parseFloat(entrada.valor_unitario).toFixed(2)} -
-                    Total: R$ ${parseFloat(entrada.valor_total).toFixed(2)} -
-                    NF: ${entrada.nota_fiscal} -
-                    Data: ${new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
-                `;
-                lista.appendChild(li);
-            });
+            if (lista) {
+                lista.innerHTML = '';
+                
+                data.estoque.forEach(entrada => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `
+                        <strong>${entrada.produto}</strong> - 
+                        Quantidade: ${entrada.quantidade} - 
+                        Valor Unitário: R$ ${parseFloat(entrada.valor_unitario).toFixed(2)} -
+                        Total: R$ ${parseFloat(entrada.valor_total).toFixed(2)} -
+                        NF: ${entrada.nota_fiscal} -
+                        Data: ${new Date(entrada.data_entrada).toLocaleDateString('pt-BR')}
+                    `;
+                    lista.appendChild(li);
+                });
+            }
         }
     } catch (err) {
         console.error('Erro ao carregar entradas de estoque:', err);
