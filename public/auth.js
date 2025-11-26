@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/register', {
+                const response = await fetch(`${API_BASE}/api/register`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ nome, email, password }),
@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const password = document.getElementById('password').value;
 
             try {
-                const response = await fetch('/login', {
+                const response = await fetch(`${API_BASE}/api/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password }),
@@ -73,7 +73,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const email = document.getElementById('email').value;
 
             try {
-                const response = await fetch('/reset-password', {
+                const response = await fetch(`${API_BASE}/api/reset-password`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email }),
@@ -114,7 +114,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const salario = document.getElementById('salario').value;
 
             try {
-                const response = await fetch('/funcionarios', {
+                const response = await fetch(`${API_BASE}/api/funcionarios`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
