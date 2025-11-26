@@ -29,6 +29,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Conectar ao MongoDB quando o servidor iniciar
 let db;
+let dbConnectionAttempted = false;
+
 database.connect().then(database => {
     db = database;
     console.log('✅ Database conectada e pronta para uso');
@@ -76,20 +78,46 @@ app.post('/api/register', async (req, res) => {
 // Rota para login
 app.post('/api/login', async (req, res) => {
     const { email, password } = req.body;
+    
+    console.log('🔐 Tentativa de login:', { email });
+    
     try {
+        // Verifica se o database está conectado
+        if (!db) {
+            console.error('❌ Database não conectada');
+            return res.status(500).json({ 
+                success: false, 
+                message: 'Servidor não conectado ao banco de dados' 
+            });
+        }
+
         const user = await db.collection('users').findOne({ email, password });
+        
         if (user) {
+            console.log('✅ Login bem-sucedido para:', email);
             res.json({ 
                 success: true, 
                 message: 'Login bem-sucedido!', 
-                user: { _id: user._id, nome: user.nome, email: user.email } 
+                user: { 
+                    _id: user._id, 
+                    nome: user.nome, 
+                    email: user.email 
+                } 
             });
         } else {
-            res.status(401).json({ success: false, message: 'Credenciais inválidas.' });
+            console.log('❌ Credenciais inválidas para:', email);
+            res.status(401).json({ 
+                success: false, 
+                message: 'Credenciais inválidas.' 
+            });
         }
     } catch (err) {
-        console.error('Erro ao fazer login:', err);
-        res.status(500).json({ success: false, message: 'Erro no servidor.' });
+        console.error('💥 Erro ao fazer login:', err);
+        res.status(500).json({ 
+            success: false, 
+            message: 'Erro interno do servidor.',
+            error: process.env.NODE_ENV === 'development' ? err.message : 'Erro de conexão'
+        });
     }
 });
 
@@ -703,22 +731,61 @@ app.get('/', (req, res) => {
 });
 
 // Rota para health check
-app.get('/health', (req, res) => {
-    res.json({ 
-        status: 'OK', 
-        timestamp: new Date().toISOString(),
-        database: db ? 'connected' : 'disconnected'
-    });
+app.get('/api/health', async (req, res) => {
+    try {
+        const healthStatus = {
+            status: 'OK',
+            timestamp: new Date().toISOString(),
+            server: {
+                environment: process.env.NODE_ENV || 'development',
+                node_version: process.version,
+                uptime: process.uptime()
+            },
+            database: {
+                connected: !!db,
+                database_name: db ? 'senac_sistema' : 'disconnected'
+            },
+            environment: {
+                mongodb_uri: process.env.MONGODB_URI ? 'DEFINIDA' : 'NÃO DEFINIDA',
+                email_host: process.env.EMAIL_HOST ? 'DEFINIDO' : 'NÃO DEFINIDO'
+            }
+        };
+
+        // Testa a conexão com o MongoDB se estiver conectado
+        if (db) {
+            try {
+                await db.command({ ping: 1 });
+                healthStatus.database.ping = 'OK';
+            } catch (pingError) {
+                healthStatus.database.ping = 'ERROR';
+                healthStatus.database.ping_error = pingError.message;
+                healthStatus.status = 'DEGRADED';
+            }
+        } else {
+            healthStatus.status = 'ERROR';
+            healthStatus.database.connection_error = 'Database não inicializada';
+        }
+
+        res.json(healthStatus);
+    } catch (error) {
+        res.status(500).json({
+            status: 'ERROR',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
 });
 
 // Middleware de erro global
-app.use((err, req, res, next) => {
-    console.error('Erro não tratado:', err);
-    res.status(500).json({ 
-        success: false, 
-        message: 'Erro interno do servidor',
-        error: process.env.NODE_ENV === 'development' ? err.message : 'Internal server error'
-    });
+app.use('/api/*', (req, res, next) => {
+    if (!db && req.method !== 'GET' && !req.path.includes('/health') && !req.path.includes('/debug')) {
+        return res.status(503).json({
+            success: false,
+            message: 'Serviço temporariamente indisponível. Banco de dados não conectado.',
+            timestamp: new Date().toISOString()
+        });
+    }
+    next();
 });
 
 // Rota 404
