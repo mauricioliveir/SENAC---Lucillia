@@ -1,3 +1,8 @@
+const API_BASE = window.location.hostname.includes('localhost')
+    ? 'http://localhost:3000/api'
+    : 'https://senac-lucillia.vercel.app/api';
+
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -10,6 +15,7 @@ const { ObjectId } = require('mongodb');
 const database = require('./database');
 
 const app = express();
+const router = express.Router();
 const port = process.env.PORT || 3000;
 
 // Configuração do transporte de e-mail com Nodemailer
@@ -651,7 +657,7 @@ app.get("/relatorio-financeiro", async (req, res) => {
 });
 
 // Rota de teste para validar funcionamento do sistema
-app.get('/teste', async (req, res) => {
+app.get('/api/teste', async (req, res) => {
     try {
         const collections = await db.listCollections().toArray();
         const collectionNames = collections.map(col => col.name);
@@ -732,4 +738,5 @@ process.on('SIGINT', async () => {
     process.exit(0);
 });
 
+app.use('/api', router);
 module.exports = app;
